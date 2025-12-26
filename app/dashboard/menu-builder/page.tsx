@@ -10,6 +10,7 @@ import { DeleteItemModal } from '@/src/components/menu-builder/DeleteItemModal'
 import { Toast, ToastType } from '@/src/components/ui/Toast'
 import { Search, List, Store, Loader2, Plus, Utensils } from 'lucide-react'
 import { MenuItem } from '@/src/types'
+import { EditItemModal } from '@/src/components/menu-builder/EditItemModal'
 
 export default function MenuBuilderPage() {
   const {
@@ -23,6 +24,7 @@ export default function MenuBuilderPage() {
   const [isCatModalOpen, setIsCatModalOpen] = useState(false)
   const [isItemModalOpen, setIsItemModalOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null)
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null)
 
   // --- UI Feedback States ---
   const [isDeleting, setIsDeleting] = useState(false)
@@ -47,6 +49,11 @@ export default function MenuBuilderPage() {
 
     setIsDeleting(false)
     setItemToDelete(null)
+  }
+
+  const handleItemUpdate = (updatedItem: MenuItem) => {
+    setItems(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item))
+    showToast(`"${updatedItem.name}" updated successfully`)
   }
 
   if (loading) return (
@@ -115,8 +122,8 @@ export default function MenuBuilderPage() {
               <button
                 onClick={() => setActiveFilter('all')}
                 className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${activeFilter === 'all'
-                    ? 'bg-slate-900 text-white shadow-xl'
-                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white shadow-xl'
+                  : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
                   }`}
               >
                 All Dishes
@@ -126,8 +133,8 @@ export default function MenuBuilderPage() {
                   key={cat.id}
                   onClick={() => setActiveFilter(cat.id)}
                   className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${activeFilter === cat.id
-                      ? 'bg-indigo-600 text-white shadow-xl'
-                      : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
+                    ? 'bg-indigo-600 text-white shadow-xl'
+                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
                     }`}
                 >
                   {cat.name}
@@ -153,6 +160,7 @@ export default function MenuBuilderPage() {
                       categoryName={categories.find(c => c.id === item.category_id)?.name}
                       onMove={(dir) => moveItem(idx, dir)}
                       onDelete={() => setItemToDelete(item)}
+                      onEdit={() => setEditingItem(item)}
                     />
                   ))
                 ) : (
@@ -202,6 +210,13 @@ export default function MenuBuilderPage() {
         onConfirm={handleConfirmDelete}
         itemName={itemToDelete?.name || ""}
         isLoading={isDeleting}
+      />
+
+      <EditItemModal
+        item={editingItem}
+        categories={categories}
+        onClose={() => setEditingItem(null)}
+        onUpdated={handleItemUpdate}
       />
 
       {/* --- NOTIFICATION LAYER --- */}

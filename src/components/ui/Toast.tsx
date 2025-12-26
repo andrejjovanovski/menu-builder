@@ -25,7 +25,7 @@ export function Toast({ message, type, onClose }: ToastProps) {
     }
 
     return (
-        <div className={`fixed bottom-8 right-8 z-[100] flex items-center gap-3 px-6 py-4 rounded-[24px] text-white shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 ${styles[type]}`}>
+        <div className={`fixed bottom-8 right-8 z-100 flex items-center gap-3 px-6 py-4 rounded-[24px] text-white shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 ${styles[type]}`}>
             {type === 'success' ? (
                 <CheckCircle2 className="w-5 h-5 text-emerald-100" />
             ) : (
