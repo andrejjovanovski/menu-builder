@@ -92,7 +92,7 @@ export default function LoginPage() {
             {/* ERROR MESSAGE (From hook) */}
             {errorMsg && (
               <div className="flex items-center gap-2 p-4 bg-rose-50 border border-rose-100 rounded-2xl animate-in slide-in-from-top-2">
-                <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
                 <p className="text-sm text-rose-700 font-medium leading-tight">{errorMsg}</p>
               </div>
             )}
