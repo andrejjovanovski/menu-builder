@@ -8,11 +8,13 @@ import { CategoryModal } from '@/src/components/menu-builder/CategoryModal'
 import { ItemModal } from '@/src/components/menu-builder/ItemModal'
 import { DeleteItemModal } from '@/src/components/menu-builder/DeleteItemModal'
 import { Toast, ToastType } from '@/src/components/ui/Toast'
-import { Search, List, Store, Loader2, Plus, Utensils } from 'lucide-react'
+import { Search, List, Store, Loader2, Plus, Utensils, Settings } from 'lucide-react'
 import { MenuItem } from '@/src/types'
 import { EditItemModal } from '@/src/components/menu-builder/EditItemModal'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function MenuBuilderPage() {
+  const { userRole } = useAuth()
   const {
     restaurants, selectedRestaurant, categories, loading, searchTerm,
     setSearchTerm, activeFilter, setActiveFilter, filteredItems,
@@ -69,6 +71,7 @@ export default function MenuBuilderPage() {
         selectedId={selectedRestaurant?.id}
         onSelect={selectRestaurant}
         onRefresh={fetchRestaurants}
+        userRole={userRole}
       />
 
       <main className="flex-1 min-w-0 overflow-y-auto">
@@ -113,6 +116,12 @@ export default function MenuBuilderPage() {
                   className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all"
                 >
                   <List className="w-4 h-4 text-indigo-600" /> Categories
+                </button>
+                <button
+                  //implement settings modal
+                  className="flex items-center cursor-pointer gap-2 px-5 py-2.5 bg-gray-600 text-white font-bold rounded-2xl hover:bg-gray-700 transition-all shadow-lg shadow-indigo-100"
+                >
+                  <Settings className="w-5 h-5" />
                 </button>
               </div>
             </header>

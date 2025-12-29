@@ -4,7 +4,12 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { generateSlug } from '@/src/utils/slug'
 
-export function CreateRestaurantForm({ onCreate }: { onCreate: () => void }) {
+interface CreateRestaurantFormProps {
+    onCreate: () => void
+    className?: string
+}
+
+export function CreateRestaurantForm({ onCreate, className }: CreateRestaurantFormProps) {
     const [name, setName] = useState('')
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -27,7 +32,7 @@ export function CreateRestaurantForm({ onCreate }: { onCreate: () => void }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="relative">
+        <form onSubmit={handleSubmit} className={`relative ${className}`}>
             <input
                 type="text"
                 value={name}

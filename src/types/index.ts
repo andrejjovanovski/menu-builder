@@ -73,3 +73,5 @@ export interface UpdateMenuItemInput {
   is_available?: boolean;
   order?: number;
 }
+
+export type UserRole = 'admin' | 'owner' | null
