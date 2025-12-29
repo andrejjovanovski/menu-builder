@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
+// 1. Import these for internationalization
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, getLocale } from 'next-intl/server';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,17 +21,27 @@ export const metadata: Metadata = {
   description: "Digital Menus, Poured to Perfection.",
 };
 
-export default function RootLayout({
+// 2. Make the function 'async'
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  // 3. Fetch messages and current locale on the server
+  const messages = await getMessages();
+  const locale = await getLocale();
+
   return (
-    <html lang="en">
+    // 4. Update the lang attribute to be dynamic
+    <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        {/* 5. Wrap children in the Provider */}
+        <NextIntlClientProvider messages={messages} locale={locale}>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check, BarChart3, CheckCircle, Phone, Menu, Smartphone, Send, Instagram, Mail, X, ShieldCheck, Zap, HeartHandshake, AtSign } from 'lucide-react';
+import { useTranslations, useLocale } from 'next-intl';
 
 // Animation Variants
 const fadeInUp: Variants = {
@@ -18,16 +19,17 @@ const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
+    transition: { staggerChildren: 0.1 }
   }
 };
 
 export default function MenuCupLanding() {
+  const tNav = useTranslations('Header');
+
+  const locale = useLocale();
+
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState('EN');
 
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
@@ -36,9 +38,15 @@ export default function MenuCupLanding() {
   };
 
   const languages = [
-    { code: 'EN', label: 'English', flag: '🇬🇧' },
-    { code: 'MK', label: 'Macedonian', flag: '🇲🇰' }
+    { code: 'en', label: 'English', flag: '🇬🇧' },
+    { code: 'mk', label: 'Macedonian', flag: '🇲🇰' }
   ];
+
+  const handleLangChange = (lang: string) => {
+    document.cookie = `NEXT_LOCALE=${lang}`;
+    setIsLangOpen(false)
+    window.location.reload();
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 scroll-smooth overflow-x-hidden">
@@ -51,32 +59,27 @@ export default function MenuCupLanding() {
             {/* LOGO */}
             <div className="flex justify-start items-center">
               <a href="#" className="flex items-center gap-3">
-                <img
-                  src="logos/logonav.png"
-                  alt="MenuCup Logo"
-                  className="h-8 md:h-10 w-auto rounded-md"
-                />
+                <img src="/logos/logonav.png" alt="MenuCup Logo" className="h-8 md:h-10 w-auto rounded-md" />
               </a>
             </div>
 
             {/* DESKTOP NAV */}
             <nav className="hidden md:flex space-x-8 items-center">
-              <button onClick={() => scrollTo('features')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Features</button>
-              <button onClick={() => scrollTo('about')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Why Us</button>
-              <button onClick={() => scrollTo('pricing')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Pricing</button>
-              <button onClick={() => scrollTo('contact')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Contact us</button>
+              <button onClick={() => scrollTo('features')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">{tNav('features')}</button>
+              <button onClick={() => scrollTo('about')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">{tNav('whyUs')}</button>
+              <button onClick={() => scrollTo('pricing')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">{tNav('pricing')}</button>
+              <button onClick={() => scrollTo('contact')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">{tNav('contact')}</button>
             </nav>
 
             {/* RIGHT ACTIONS (Desktop) */}
             <div className="hidden md:flex items-center gap-4">
-              {/* LANGUAGE DROPDOWN */}
               <div className="relative">
                 <button
                   onClick={() => setIsLangOpen(!isLangOpen)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition text-sm font-bold text-slate-700"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition text-sm font-bold text-slate-700 uppercase"
                 >
-                  <span className="text-lg">{languages.find(l => l.code === currentLang)?.flag}</span>
-                  {currentLang}
+                  <span className="text-lg">{languages.find(l => l.code === locale)?.flag}</span>
+                  {locale}
                   <ChevronDown size={14} className={`transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -91,18 +94,14 @@ export default function MenuCupLanding() {
                       {languages.map((lang) => (
                         <button
                           key={lang.code}
-                          onClick={() => {
-                            setCurrentLang(lang.code);
-                            setIsLangOpen(false);
-                            // Add your translation logic trigger here (e.g., i18n.changeLanguage)
-                          }}
+                          onClick={() => handleLangChange(lang.code)}
                           className="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-indigo-50 transition text-slate-700 font-medium"
                         >
                           <span className="flex items-center gap-3">
                             <span className="text-lg">{lang.flag}</span>
                             {lang.label}
                           </span>
-                          {currentLang === lang.code && <Check size={14} className="text-indigo-600" />}
+                          {locale === lang.code && <Check size={14} className="text-indigo-600" />}
                         </button>
                       ))}
                     </motion.div>
@@ -111,13 +110,13 @@ export default function MenuCupLanding() {
               </div>
 
               <button onClick={() => scrollTo('contact')} className="inline-flex items-center justify-center px-6 py-2.5 border border-transparent rounded-full shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-all">
-                Book a Demo
+                {tNav('demo')}
               </button>
             </div>
 
             {/* MOBILE TOGGLE */}
             <div className="md:hidden">
-              <button onClick={() => setIsNavOpen(!isNavOpen)} className="p-2 text-slate-600">
+              <button onClick={() => setIsNavOpen(!isNavOpen)} className="p-2 text-slate-600 focus:outline-none">
                 {isNavOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
@@ -132,36 +131,32 @@ export default function MenuCupLanding() {
             className="md:hidden bg-white border-b border-slate-100 px-4 py-6 space-y-6 shadow-xl"
           >
             <div className="space-y-4">
-              <button onClick={() => scrollTo('features')} className="block w-full text-left font-bold text-slate-600">Features</button>
-              <button onClick={() => scrollTo('about')} className="block w-full text-left font-bold text-slate-600">Why Us</button>
-              <button onClick={() => scrollTo('pricing')} className="block w-full text-left font-bold text-slate-600">Pricing</button>
-              <button onClick={() => scrollTo('contact')} className="block w-full text-left font-bold text-slate-600">Contact us</button>
+              <button onClick={() => scrollTo('features')} className="block w-full text-left font-bold text-slate-600">{tNav('features')}</button>
+              <button onClick={() => scrollTo('about')} className="block w-full text-left font-bold text-slate-600">{tNav('whyUs')}</button>
+              <button onClick={() => scrollTo('pricing')} className="block w-full text-left font-bold text-slate-600">{tNav('pricing')}</button>
+              <button onClick={() => scrollTo('contact')} className="block w-full text-left font-bold text-slate-600">{tNav('contact')}</button>
             </div>
 
             <div className="pt-4 border-t border-slate-50">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Select Language</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Language</p>
               <div className="flex gap-4">
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
-                    onClick={() => {
-                      setCurrentLang(lang.code);
-                      setIsNavOpen(false);
-                    }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition ${currentLang === lang.code ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-600'}`}
+                    onClick={() => handleLangChange(lang.code)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition ${locale === lang.code ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-600'}`}
                   >
                     <span className="text-lg">{lang.flag}</span>
-                    <span className="font-bold text-sm">{lang.code}</span>
+                    <span className="font-bold text-sm uppercase">{lang.code}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <button onClick={() => scrollTo('contact')} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-center">Book a Demo</button>
+            <button onClick={() => scrollTo('contact')} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-center uppercase tracking-tight">{tNav('demo')}</button>
           </motion.div>
         )}
       </header>
-
       {/* --- HERO SECTION --- */}
       <section className="pt-32 pb-20 md:pt-48 md:pb-32 bg-gradient-to-b from-indigo-50/50 to-white px-4">
         <div className="max-w-7xl mx-auto text-center">

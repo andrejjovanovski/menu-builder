@@ -1,0 +1,23 @@
+{
+    "Hero": {
+        "title": "Digital Menus, Poured to Perfection.",
+        "subtitle": "Accelerate your restaurant's growth with sleek digital menus."
+    },
+    "Header": {
+        "features": "Features",
+        "whyUs": "Why us",
+        "pricing": "Pricing",
+        "contact": "Contact us",
+        "demo": "Book a demo"
+    },
+    "Features": {
+        "title": "",
+        "subtitle": "",
+        "cardOneTitle": "",
+        "cardOneDesc": "",
+        "cardTwoTitle": "",
+        "cardTwoDesc": "",
+        "cardThreeTitle": "",
+        "cardThreeDesc": ""
+    }
+}
