@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState } from 'react';
-import { motion, Variants } from 'framer-motion';
-import { ArrowRight, BarChart3, CheckCircle, Coffee, Menu, Smartphone, Send, Instagram, Mail, X, ShieldCheck, Zap, HeartHandshake } from 'lucide-react';
+import { motion, Variants, AnimatePresence } from 'framer-motion';
+import { ChevronDown, Check, BarChart3, CheckCircle, Phone, Menu, Smartphone, Send, Instagram, Mail, X, ShieldCheck, Zap, HeartHandshake, AtSign } from 'lucide-react';
 
 // Animation Variants
 const fadeInUp: Variants = {
@@ -26,12 +26,19 @@ const staggerContainer: Variants = {
 
 export default function MenuCupLanding() {
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [currentLang, setCurrentLang] = useState('EN');
 
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
     element?.scrollIntoView({ behavior: 'smooth' });
     setIsNavOpen(false);
   };
+
+  const languages = [
+    { code: 'EN', label: 'English', flag: '🇬🇧' },
+    { code: 'MK', label: 'Macedonian', flag: '🇲🇰' }
+  ];
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 scroll-smooth overflow-x-hidden">
@@ -40,6 +47,8 @@ export default function MenuCupLanding() {
       <header className="fixed w-full bg-white/80 backdrop-blur-lg z-50 border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-3">
+
+            {/* LOGO */}
             <div className="flex justify-start items-center">
               <a href="#" className="flex items-center gap-3">
                 <img
@@ -50,18 +59,63 @@ export default function MenuCupLanding() {
               </a>
             </div>
 
-            <nav className="hidden md:flex space-x-8">
+            {/* DESKTOP NAV */}
+            <nav className="hidden md:flex space-x-8 items-center">
               <button onClick={() => scrollTo('features')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Features</button>
               <button onClick={() => scrollTo('about')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Why Us</button>
               <button onClick={() => scrollTo('pricing')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Pricing</button>
+              <button onClick={() => scrollTo('contact')} className="text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">Contact us</button>
             </nav>
 
-            <div className="hidden md:flex items-center">
+            {/* RIGHT ACTIONS (Desktop) */}
+            <div className="hidden md:flex items-center gap-4">
+              {/* LANGUAGE DROPDOWN */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsLangOpen(!isLangOpen)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 transition text-sm font-bold text-slate-700"
+                >
+                  <span className="text-lg">{languages.find(l => l.code === currentLang)?.flag}</span>
+                  {currentLang}
+                  <ChevronDown size={14} className={`transition-transform ${isLangOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                <AnimatePresence>
+                  {isLangOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-40 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden py-1"
+                    >
+                      {languages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => {
+                            setCurrentLang(lang.code);
+                            setIsLangOpen(false);
+                            // Add your translation logic trigger here (e.g., i18n.changeLanguage)
+                          }}
+                          className="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-indigo-50 transition text-slate-700 font-medium"
+                        >
+                          <span className="flex items-center gap-3">
+                            <span className="text-lg">{lang.flag}</span>
+                            {lang.label}
+                          </span>
+                          {currentLang === lang.code && <Check size={14} className="text-indigo-600" />}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               <button onClick={() => scrollTo('contact')} className="inline-flex items-center justify-center px-6 py-2.5 border border-transparent rounded-full shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-all">
                 Book a Demo
               </button>
             </div>
 
+            {/* MOBILE TOGGLE */}
             <div className="md:hidden">
               <button onClick={() => setIsNavOpen(!isNavOpen)} className="p-2 text-slate-600">
                 {isNavOpen ? <X size={24} /> : <Menu size={24} />}
@@ -70,15 +124,39 @@ export default function MenuCupLanding() {
           </div>
         </div>
 
+        {/* MOBILE MENU */}
         {isNavOpen && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden bg-white border-b border-slate-100 px-4 py-6 space-y-4 shadow-xl"
+            className="md:hidden bg-white border-b border-slate-100 px-4 py-6 space-y-6 shadow-xl"
           >
-            <button onClick={() => scrollTo('features')} className="block w-full text-left font-bold text-slate-600">Features</button>
-            <button onClick={() => scrollTo('about')} className="block w-full text-left font-bold text-slate-600">Why Us</button>
-            <button onClick={() => scrollTo('pricing')} className="block w-full text-left font-bold text-slate-600">Pricing</button>
+            <div className="space-y-4">
+              <button onClick={() => scrollTo('features')} className="block w-full text-left font-bold text-slate-600">Features</button>
+              <button onClick={() => scrollTo('about')} className="block w-full text-left font-bold text-slate-600">Why Us</button>
+              <button onClick={() => scrollTo('pricing')} className="block w-full text-left font-bold text-slate-600">Pricing</button>
+              <button onClick={() => scrollTo('contact')} className="block w-full text-left font-bold text-slate-600">Contact us</button>
+            </div>
+
+            <div className="pt-4 border-t border-slate-50">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Select Language</p>
+              <div className="flex gap-4">
+                {languages.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => {
+                      setCurrentLang(lang.code);
+                      setIsNavOpen(false);
+                    }}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition ${currentLang === lang.code ? 'border-indigo-600 bg-indigo-50 text-indigo-600' : 'border-slate-100 text-slate-600'}`}
+                  >
+                    <span className="text-lg">{lang.flag}</span>
+                    <span className="font-bold text-sm">{lang.code}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button onClick={() => scrollTo('contact')} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-center">Book a Demo</button>
           </motion.div>
         )}
@@ -236,8 +314,14 @@ export default function MenuCupLanding() {
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-6">Contact</h4>
             <div className="flex flex-col gap-4 text-sm font-medium">
-              <a href="mailto:menucup025@gmail.com" className="text-indigo-400 font-bold hover:text-white transition-all text-sm block">menucup025@gmail.com</a>
-              <p className='font-medium'>+38978261825</p>
+              <div className='flex gap-3 items-center'>
+                <AtSign size={20} />
+                <a href="mailto:menucup025@gmail.com" className="text-indigo-400 font-bold hover:text-white transition-all text-sm block">menucup025@gmail.com</a>
+              </div>
+              <div className='flex gap-3 items-center'>
+                <Phone size={20} />
+                <p className='font-medium'>+38978261825</p>
+              </div>
             </div>
           </div>
         </div>
