@@ -1,7 +1,9 @@
 {
     "Hero": {
-        "title": "Digital Menus, Poured to Perfection.",
-        "subtitle": "Accelerate your restaurant's growth with sleek digital menus."
+        "tag": "the future of hospitality",
+        "titleTop": "Digital Menus,",
+        "titleBottom": "Poured to Perfection.",
+        "subtitle": "Accelerate your restaurant's growth with sleek, high-conversion digital menus. One scan to boost sales and streamline your service."
     },
     "Header": {
         "features": "Features",
