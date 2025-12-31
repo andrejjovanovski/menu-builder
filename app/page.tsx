@@ -43,6 +43,10 @@ const staggerContainer: Variants = {
 export default function MenuCupLanding() {
   const tNav = useTranslations("Header");
   const tHero = useTranslations("Hero");
+  const tFeatures = useTranslations("Features");
+  const tAbout = useTranslations("About");
+  const tPricing = useTranslations("Pricing");
+  const tContact = useTranslations("Contact");
 
   const locale = useLocale();
 
@@ -333,10 +337,10 @@ export default function MenuCupLanding() {
             variants={fadeInUp}
           >
             <h2 className="text-indigo-300 font-bold uppercase text-sm tracking-widest mb-4 italic">
-              The Growth Engine
+              {tFeatures("eyebrow")}
             </h2>
             <p className="text-3xl md:text-5xl font-black text-white leading-tight">
-              Built for Business Growth
+              {tFeatures("title")}
             </p>
           </motion.div>
           <motion.div
@@ -352,11 +356,10 @@ export default function MenuCupLanding() {
             >
               <BarChart3 className="h-8 w-8 text-indigo-400 mb-6" />
               <h3 className="text-xl font-bold text-white mb-4">
-                Drive Revenue
+                {tFeatures("cards.driveRevenue.title")}
               </h3>
               <p className="text-indigo-100/70 text-sm leading-relaxed">
-                Strategic visual layouts encourage upselling. Venues see a lift
-                in average ticket size.
+                {tFeatures("cards.driveRevenue.description")}
               </p>
             </motion.div>
             <motion.div
@@ -365,11 +368,10 @@ export default function MenuCupLanding() {
             >
               <CheckCircle className="h-8 w-8 text-indigo-400 mb-6" />
               <h3 className="text-xl font-bold text-white mb-4">
-                Instant Updates
+                {tFeatures("cards.instantUpdates.title")}
               </h3>
               <p className="text-indigo-100/70 text-sm leading-relaxed">
-                Update prices and mark items sold out instantly from your
-                dashboard.
+                {tFeatures("cards.instantUpdates.description")}
               </p>
             </motion.div>
             <motion.div
@@ -378,11 +380,10 @@ export default function MenuCupLanding() {
             >
               <Smartphone className="h-8 w-8 text-indigo-400 mb-6" />
               <h3 className="text-xl font-bold text-white mb-4">
-                Frictionless UX
+                {tFeatures("cards.frictionlessUX.title")}
               </h3>
               <p className="text-indigo-100/70 text-sm leading-relaxed">
-                No apps. Just a fast, responsive mobile menu experience for
-                every guest.
+                {tFeatures("cards.frictionlessUX.description")}
               </p>
             </motion.div>
           </motion.div>
@@ -400,10 +401,10 @@ export default function MenuCupLanding() {
             variants={fadeInUp}
           >
             <h2 className="text-indigo-600 font-bold uppercase text-xs tracking-[0.2em] mb-4">
-              Why Choose MenuCup
+              {tAbout("eyebrow")}
             </h2>
             <p className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight">
-              More Than Just a QR Code
+              {tAbout("title")}
             </p>
           </motion.div>
 
@@ -424,11 +425,10 @@ export default function MenuCupLanding() {
                 </div>
                 <div>
                   <h4 className="text-xl font-bold text-slate-900 mb-2">
-                    Reliable Infrastructure
+                    {tAbout("features.reliable.title")}
                   </h4>
                   <p className="text-slate-600 text-sm">
-                    99.9% uptime ensuring your menu is always available for your
-                    hungry guests.
+                    {tAbout("features.reliable.description")}
                   </p>
                 </div>
               </motion.div>
@@ -441,11 +441,10 @@ export default function MenuCupLanding() {
                 </div>
                 <div>
                   <h4 className="text-xl font-bold text-slate-900 mb-2">
-                    Lightning Fast Loading
+                    {tAbout("features.fast.title")}
                   </h4>
                   <p className="text-slate-600 text-sm">
-                    Optimized for mobile networks so your menu loads in under a
-                    second.
+                    {tAbout("features.fast.description")}
                   </p>
                 </div>
               </motion.div>
@@ -458,11 +457,10 @@ export default function MenuCupLanding() {
                 </div>
                 <div>
                   <h4 className="text-xl font-bold text-slate-900 mb-2">
-                    Dedicated Support
+                    {tAbout("features.support.title")}
                   </h4>
                   <p className="text-slate-600 text-sm">
-                    24/7 assistance to help you manage your digital transitions
-                    seamlessly.
+                    {tAbout("features.support.description")}
                   </p>
                 </div>
               </motion.div>
@@ -482,10 +480,11 @@ export default function MenuCupLanding() {
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-8">
                   <p className="text-2xl font-black text-center">
-                    "MenuCup turned our physical limitations into digital
-                    opportunities."
+                    {tAbout("testimonial.quote")}
                   </p>
-                  <p className="mt-4 font-bold opacity-70">— Partner Venue</p>
+                  <p className="mt-4 font-bold opacity-70">
+                    — {tAbout("testimonial.author")}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -493,7 +492,7 @@ export default function MenuCupLanding() {
         </div>
       </section>
 
-      {/* --- UPDATED PRICING SECTION --- */}
+      {/* --- PRICING SECTION --- */}
       <section id="pricing" className="py-24 bg-slate-50 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <motion.div
@@ -504,10 +503,10 @@ export default function MenuCupLanding() {
             className="mb-16"
           >
             <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">
-              Flexible Billing
+              {tPricing("title")}
             </h2>
             <p className="text-slate-500 max-w-xl mx-auto">
-              Choose the billing cycle that fits your business model.
+              {tPricing("subtitle")}
             </p>
           </motion.div>
 
@@ -520,33 +519,33 @@ export default function MenuCupLanding() {
               className="p-8 rounded-3xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition"
             >
               <h3 className="text-lg font-bold mb-2 uppercase tracking-widest text-slate-400">
-                Monthly Pay
+                {tPricing("monthly.label")}
               </h3>
               <div className="text-5xl font-black mb-2 text-slate-900">
-                $14.00
+                {tPricing("monthly.price")}
               </div>
               <p className="text-sm text-slate-500 mb-6">
-                per month / billed monthly
+                {tPricing("monthly.priceNote")}
               </p>
               <ul className="space-y-4 mb-8 text-sm text-slate-600">
                 <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" /> No
-                  long-term commitment
+                  <CheckCircle size={16} className="text-indigo-600" />
+                  {tPricing("monthly.features.featOne")}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" /> Full
-                  feature access
+                  <CheckCircle size={16} className="text-indigo-600" />{" "}
+                  {tPricing("monthly.features.featTwo")}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" /> Cancel
-                  anytime
+                  <CheckCircle size={16} className="text-indigo-600" />{" "}
+                  {tPricing("monthly.features.featThree")}
                 </li>
               </ul>
               <button
                 onClick={() => scrollTo("contact")}
                 className="w-full py-4 bg-white border-2 border-slate-100 rounded-xl font-bold hover:bg-slate-50 transition"
               >
-                Get Started
+                {tPricing("monthly.cta")}
               </button>
             </motion.div>
 
@@ -555,42 +554,42 @@ export default function MenuCupLanding() {
               variants={fadeInUp}
               initial="hidden"
               whileInView="visible"
-              className="p-8 rounded-3xl border-2 border-indigo-600 bg-white shadow-xl relative scale-105 z-10"
+              className="p-8 rounded-3xl border-2 border-indigo-600 bg-white shadow-xl relative scale-105 z-10 overflow-hidden"
             >
               <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-xl uppercase tracking-widest">
-                Best Value
+                {tPricing("yearly.badge")}
               </div>
               <h3 className="text-lg font-bold mb-2 uppercase tracking-widest text-indigo-600">
-                Yearly Pay
+                {tPricing("yearly.label")}
               </h3>
               <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-5xl font-black text-slate-900">
-                  $10.50
+                  {tPricing("yearly.price")}
                 </span>
                 <span className="text-lg font-bold text-slate-400">/mo</span>
               </div>
               <p className="text-sm font-bold text-indigo-600 mb-6">
-                Billed as $126.00 / year
+                {tPricing("yearly.priceNote")}
               </p>
               <ul className="space-y-4 mb-8 text-sm text-slate-600">
                 <li className="flex items-center gap-2 font-bold text-slate-900">
-                  <CheckCircle size={16} className="text-indigo-600" /> Save 25%
-                  annually
+                  <CheckCircle size={16} className="text-indigo-600" />{" "}
+                  {tPricing("yearly.features.featOne")}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" /> Priority
-                  24/7 support
+                  <CheckCircle size={16} className="text-indigo-600" />{" "}
+                  {tPricing("yearly.features.featTwo")}
                 </li>
                 <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" /> Custom
-                  QR branding
+                  <CheckCircle size={16} className="text-indigo-600" />{" "}
+                  {tPricing("yearly.features.featThree")}
                 </li>
               </ul>
               <button
                 onClick={() => scrollTo("contact")}
                 className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
               >
-                Get Annual Plan
+                {tPricing("yearly.cta")}
               </button>
             </motion.div>
           </div>
@@ -607,12 +606,9 @@ export default function MenuCupLanding() {
             variants={fadeInUp}
           >
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl mb-4 text-center">
-              Ready to pour growth into your business?
+              {tContact("title")}
             </h2>
-            <p className="text-lg text-slate-500">
-              Schedule a personalized demo and see how MenuCup can modernize
-              your venue.
-            </p>
+            <p className="text-lg text-slate-500">{tContact("subtitle")}</p>
           </motion.div>
           <motion.div
             className="max-w-lg mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100"
@@ -627,38 +623,50 @@ export default function MenuCupLanding() {
               >
                 <div>
                   <label className="block text-xs font-black uppercase text-slate-500 tracking-widest">
-                    Full Name
+                    {tContact("form.fullName.label")}
                   </label>
                   <input
                     name="fullName"
                     required
                     type="text"
                     className="mt-2 block w-full rounded-xl border-slate-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 px-4 py-4"
-                    placeholder="Your Name"
+                    placeholder={tContact("form.fullName.placeholder")}
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-black uppercase text-slate-500 tracking-widest">
-                    Business Email
+                    {tContact("form.phone.label")}
+                  </label>
+                  <input
+                    name="phoneNumber"
+                    required
+                    type="text"
+                    className="mt-2 block w-full rounded-xl border-slate-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 px-4 py-4"
+                    placeholder={tContact("form.phone.placeholder")}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black uppercase text-slate-500 tracking-widest">
+                    {tContact("form.email.label")}
                   </label>
                   <input
                     name="email"
                     required
                     type="email"
                     className="mt-2 block w-full rounded-xl border-slate-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 px-4 py-4"
-                    placeholder="email@restaurant.com"
+                    placeholder={tContact("form.email.placeholder")}
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-black uppercase text-slate-500 tracking-widest">
-                    Company Name
+                    {tContact("form.company.label")}
                   </label>
                   <input
                     type="text"
                     name="companyName"
                     required
                     className="mt-2 block w-full rounded-xl border-slate-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 px-4 py-4"
-                    placeholder="Venue Name"
+                    placeholder={tContact("form.company.placeholder")}
                   />
                 </div>
                 <div className="pt-4">
@@ -668,19 +676,19 @@ export default function MenuCupLanding() {
                     className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition active:scale-95"
                   >
                     {status === "loading" ? (
-                      "Sending..."
+                      <>{tContact("form.sending")}</>
                     ) : status === "success" ? (
-                      "Request sent!"
+                      <>{tContact("form.success")}</>
                     ) : (
                       <>
-                        Request Demo
+                        {tContact("form.submit")}
                         <Send size={18} className="ml-2" />
                       </>
                     )}
                   </button>
                   {status === "error" && (
                     <p className="text-red-500 text-xs mt-2 text-center">
-                      Something went wrong. Please try again.
+                      {tContact("form.error")}
                     </p>
                   )}
                 </div>
@@ -690,7 +698,7 @@ export default function MenuCupLanding() {
         </div>
       </section>
 
-      {/* --- REVERTED FOOTER VERSION --- */}
+      {/* --- FOOTER VERSION --- */}
       <footer className="bg-slate-950 text-slate-400 py-16 px-4">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
           <div className="md:col-span-2">
@@ -702,7 +710,7 @@ export default function MenuCupLanding() {
               />
             </div>
             <p className="max-w-sm text-sm mb-6 leading-relaxed text-slate-500 italic font-medium">
-              Poured to Perfection.
+              {tNav("slogan")}
             </p>
             <div className="flex gap-6">
               <a
@@ -723,32 +731,32 @@ export default function MenuCupLanding() {
           </div>
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-6">
-              Explore
+              {tNav("explore")}
             </h4>
             <div className="flex flex-col gap-4 text-sm font-medium">
               <button
                 onClick={() => scrollTo("features")}
                 className="text-left hover:text-indigo-400 transition"
               >
-                Features
+                {tNav("features")}
               </button>
               <button
                 onClick={() => scrollTo("about")}
                 className="text-left hover:text-indigo-400 transition"
               >
-                Why Us
+                {tNav("whyUs")}
               </button>
               <button
                 onClick={() => scrollTo("pricing")}
                 className="text-left hover:text-indigo-400 transition"
               >
-                Pricing
+                {tNav("pricing")}
               </button>
             </div>
           </div>
           <div>
             <h4 className="text-white font-bold text-xs uppercase tracking-widest mb-6">
-              Contact
+              {tNav("contactTwo")}
             </h4>
             <div className="flex flex-col gap-4 text-sm font-medium">
               <div className="flex gap-3 items-center">
@@ -768,7 +776,7 @@ export default function MenuCupLanding() {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-slate-900 text-[10px] flex justify-between tracking-widest uppercase font-bold text-slate-600">
-          <p>© 2025 MenuCup. All rights reserved.</p>
+          <p>© 2025 MenuCup. {tNav("rights")}</p>
           <p>menucup.com</p>
         </div>
       </footer>

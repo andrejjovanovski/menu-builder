@@ -8,6 +8,7 @@ export async function handleContactForm(formData: FormData) {
     const fullName = formData.get('fullName') as string;
     const email = formData.get("email") as string;
     const companyName = formData.get("companyName") as string;
+    const phoneNumber = formData.get("phoneNumber") as string;
 
     try {
         const { data, error } = await resend.emails.send({
@@ -49,6 +50,10 @@ export async function handleContactForm(formData: FormData) {
                             <tr>
                             <td style="padding: 8px 0; color: #475569; font-size: 14px;"><strong>Contact Name:</strong></td>
                             <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${fullName}</td>
+                            </tr>
+                            <tr>
+                            <td style="padding: 8px 0; color: #475569; font-size: 14px;"><strong>Phone Number:</strong></td>
+                            <td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${phoneNumber}</td>
                             </tr>
                             <tr>
                             <td style="padding: 8px 0; color: #475569; font-size: 14px;"><strong>Email:</strong></td>
