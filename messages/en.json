@@ -78,11 +78,11 @@
           "label": "Yearly Pay",
           "price": "$11.45",
           "priceNote": "Billed as $137.40 / year",
-          "features": [
-            "Save 25% annually",
-            "Priority 24/7 support",
-            "Custom QR branding"
-          ],
+          "features": {
+            "featOne": "Save 25% annually",
+            "featTwo": "Priority 24/7 support",
+            "featThree": "Custom QR branding"
+        },
           "cta": "Get Annual Plan"
         }
     },
