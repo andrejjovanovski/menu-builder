@@ -19,11 +19,11 @@ import {
 } from "lucide-react";
 import { MenuItem } from "@/src/types";
 import { EditItemModal } from "@/src/components/menu-builder/EditItemModal";
-import { useAuth } from "@/hooks/useAuth";
 import { RestaurantSettingsModal } from "@/src/components/menu-builder/RestaurantSettingsModal";
+import { useRouter } from "next/navigation";
 
 export default function MenuBuilderPage() {
-  const { userRole } = useAuth();
+  const router = useRouter();
   const {
     restaurants,
     selectedRestaurant,
@@ -37,10 +37,11 @@ export default function MenuBuilderPage() {
     selectRestaurant,
     fetchRestaurants,
     deleteItemAction,
-    moveItem,
     setCategories,
     deleteCategoryAction,
     setItems,
+    userRole,
+    logout,
   } = useMenuBuilder();
 
   // --- Modal States ---
@@ -85,6 +86,11 @@ export default function MenuBuilderPage() {
     showToast(`"${updatedItem.name}" updated successfully`);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
+
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
@@ -100,7 +106,7 @@ export default function MenuBuilderPage() {
         onSelect={selectRestaurant}
         onRefresh={fetchRestaurants}
         userRole={userRole}
-        onLogout={() => {}} //TODO: Implement logout function
+        onLogout={handleLogout}
       />
 
       <main className="flex-1 min-w-0 overflow-y-auto">
@@ -167,11 +173,10 @@ export default function MenuBuilderPage() {
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               <button
                 onClick={() => setActiveFilter("all")}
-                className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${
-                  activeFilter === "all"
-                    ? "bg-slate-900 text-white shadow-xl"
-                    : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
-                }`}
+                className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${activeFilter === "all"
+                  ? "bg-slate-900 text-white shadow-xl"
+                  : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
+                  }`}
               >
                 All Dishes
               </button>
@@ -179,11 +184,10 @@ export default function MenuBuilderPage() {
                 <button
                   key={cat.id}
                   onClick={() => setActiveFilter(cat.id)}
-                  className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${
-                    activeFilter === cat.id
-                      ? "bg-indigo-600 text-white shadow-xl"
-                      : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
-                  }`}
+                  className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${activeFilter === cat.id
+                    ? "bg-indigo-600 text-white shadow-xl"
+                    : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
+                    }`}
                 >
                   {cat.name}
                 </button>
@@ -208,7 +212,6 @@ export default function MenuBuilderPage() {
                       categoryName={
                         categories.find((c) => c.id === item.category_id)?.name
                       }
-                      onMove={(dir) => moveItem(idx, dir)}
                       onDelete={() => setItemToDelete(item)}
                       onEdit={() => setEditingItem(item)}
                     />

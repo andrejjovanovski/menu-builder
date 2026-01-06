@@ -68,6 +68,7 @@ export default function MenuCupLanding() {
   ];
 
   const handleLangChange = (lang: string) => {
+    // eslint-disable-next-line react-hooks/immutability
     document.cookie = `NEXT_LOCALE=${lang}`;
     setIsLangOpen(false);
     window.location.reload();

@@ -2,6 +2,8 @@ export interface Restaurant {
   id: string;
   name: string;
   slug: string;
+  subtitle: string;
+  description: string;
   owner_id: string;
   created_at: string;
   updated_at: string;

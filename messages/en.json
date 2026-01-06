@@ -1,116 +1,114 @@
 {
-    "Hero": {
-        "tag": "the future of hospitality",
-        "titleTop": "Digital Menus,",
-        "titleBottom": "Poured to Perfection.",
-        "subtitle": "Accelerate your restaurant's growth with sleek, high-conversion digital menus. One scan to boost sales and streamline your service.",
-        "cta_start": "Get started",
-        "cta_pricing": "View pricing"
-       
-    },
-    "Header": {
-        "features": "Features",
-        "whyUs": "Why us",
-        "pricing": "Pricing",
-        "contact": "Contact us",
-        "demo": "Book a demo",
-        "contactTwo": "Contact",
-        "explore": "Explore",
-        "slogan": "Poured to Perfection.",
-        "rights": "All rights reserved"
-    },
-    "Features": {
-        "eyebrow": "The Growth Engine",
-        "title": "Built for Business Growth",
-        "cards": {
-            "driveRevenue": {
-                "title": "Drive Revenue",
-                "description": "Strategic visual layouts encourage upselling. Venues see a lift in average ticket size."
-            },
-            "instantUpdates": {
-                "title": "Instant Updates",
-                "description": "Update prices and mark items sold out instantly from your dashboard."
-            },
-            "frictionlessUX": {
-                "title": "Frictionless UX",
-                "description": "No apps. Just a fast, responsive mobile menu experience for every guest."
-            }
-        }
-    },
-    "About":{
-        "eyebrow": "Why Choose MenuCup",
-        "title": "More Than Just a QR Code",
-        "features": {
-            "reliable": {
-                "title": "Reliable Infrastructure",
-                "description": "99.9% uptime ensuring your menu is always available for your hungry guests."
-            },
-            "fast": {
-                "title": "Lightning Fast Loading",
-                "description": "Optimized for mobile networks so your menu loads in under a second."
-            },
-            "support": {
-                "title": "Dedicated Support",
-                "description": "24/7 assistance to help you manage your digital transitions seamlessly."
-            }
-        },
-        "testimonial": {
-        "quote": "MenuCup turned our physical limitations into digital opportunities.",
-        "author": "Partner Venue"
-        }
-    },
-    "Pricing": {
-        "title": "Flexible Billing",
-        "subtitle": "Choose the billing cycle that fits your business model.",
-        "monthly": {
-          "label": "Monthly Pay",
-          "price": "$15.00",
-          "priceNote": "per month / billed monthly",
-          "features": {
-            "featOne":"No long-term commitment",
-            "featTwo": "Full feature access",
-            "featThree": "Cancel anytime"
-        },
-          "cta": "Get Started"
-        },
-        "yearly": {
-          "badge": "Best Value",
-          "label": "Yearly Pay",
-          "price": "$11.45",
-          "priceNote": "Billed as $137.40 / year",
-          "features": {
-            "featOne": "Save 25% annually",
-            "featTwo": "Priority 24/7 support",
-            "featThree": "Custom QR branding"
-        },
-          "cta": "Get Annual Plan"
-        }
-    },
-    "Contact": {
-        "title": "Ready to pour growth into your business?",
-        "subtitle": "Schedule a personalized demo and see how MenuCup can modernize your venue.",
-        "form": {
-          "fullName": {
-            "label": "Full Name",
-            "placeholder": "Your Name"
-          },
-          "phone": {
-            "label": "Phone Number",
-            "placeholder": "+389XXXXXXXXX"
-          },
-          "email": {
-            "label": "Business Email",
-            "placeholder": "email@restaurant.com"
-          },
-          "company": {
-            "label": "Company Name",
-            "placeholder": "Venue Name"
-          },
-    
-          "submit": "Request Demo",
-          "sending": "Sending...",
-          "success": "Request sent!",
-          "error": "Something went wrong. Please try again."
-        }
+  "Hero": {
+    "tag": "the future of hospitality",
+    "titleTop": "Digital Menus,",
+    "titleBottom": "Poured to Perfection.",
+    "subtitle": "Accelerate your restaurant's growth with sleek, high-conversion digital menus. One scan to boost sales and streamline your service.",
+    "cta_start": "Get started",
+    "cta_pricing": "View pricing"
+  },
+  "Header": {
+    "features": "Features",
+    "whyUs": "Why us",
+    "pricing": "Pricing",
+    "contact": "Contact us",
+    "demo": "Book a demo",
+    "contactTwo": "Contact",
+    "explore": "Explore",
+    "slogan": "Poured to Perfection.",
+    "rights": "All rights reserved"
+  },
+  "Features": {
+    "eyebrow": "The Growth Engine",
+    "title": "Built for Business Growth",
+    "cards": {
+      "driveRevenue": {
+        "title": "Drive Revenue",
+        "description": "Strategic visual layouts encourage upselling. Venues see a lift in average ticket size."
+      },
+      "instantUpdates": {
+        "title": "Instant Updates",
+        "description": "Update prices and mark items sold out instantly from your dashboard."
+      },
+      "frictionlessUX": {
+        "title": "Frictionless UX",
+        "description": "No apps. Just a fast, responsive mobile menu experience for every guest."
+      }
     }
+  },
+  "About": {
+    "eyebrow": "Why Choose MenuCup",
+    "title": "More Than Just a QR Code",
+    "features": {
+      "reliable": {
+        "title": "Reliable Infrastructure",
+        "description": "99.9% uptime ensuring your menu is always available for your hungry guests."
+      },
+      "fast": {
+        "title": "Lightning Fast Loading",
+        "description": "Optimized for mobile networks so your menu loads in under a second."
+      },
+      "support": {
+        "title": "Dedicated Support",
+        "description": "24/7 assistance to help you manage your digital transitions seamlessly."
+      }
+    },
+    "testimonial": {
+      "quote": "MenuCup turned our physical limitations into digital opportunities.",
+      "author": "Partner Venue"
+    }
+  },
+  "Pricing": {
+    "title": "Flexible Billing",
+    "subtitle": "Choose the billing cycle that fits your business model.",
+    "monthly": {
+      "label": "Monthly Pay",
+      "price": "$11.50",
+      "priceNote": "per month / billed monthly",
+      "features": {
+        "featOne": "No long-term commitment",
+        "featTwo": "Full feature access",
+        "featThree": "Cancel anytime"
+      },
+      "cta": "Get Started"
+    },
+    "yearly": {
+      "badge": "Best Value",
+      "label": "Yearly Pay",
+      "price": "$9.50",
+      "priceNote": "Billed as $114.00 / year",
+      "features": {
+        "featOne": "Save 25% annually",
+        "featTwo": "Priority 24/7 support",
+        "featThree": "Custom QR branding"
+      },
+      "cta": "Get Annual Plan"
+    }
+  },
+  "Contact": {
+    "title": "Ready to pour growth into your business?",
+    "subtitle": "Schedule a personalized demo and see how MenuCup can modernize your venue.",
+    "form": {
+      "fullName": {
+        "label": "Full Name",
+        "placeholder": "Your Name"
+      },
+      "phone": {
+        "label": "Phone Number",
+        "placeholder": "+389XXXXXXXXX"
+      },
+      "email": {
+        "label": "Business Email",
+        "placeholder": "email@restaurant.com"
+      },
+      "company": {
+        "label": "Company Name",
+        "placeholder": "Venue Name"
+      },
+      "submit": "Request Demo",
+      "sending": "Sending...",
+      "success": "Request sent!",
+      "error": "Something went wrong. Please try again."
+    }
+  }
 }

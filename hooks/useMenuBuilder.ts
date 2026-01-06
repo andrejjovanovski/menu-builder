@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabase'
 import { Restaurant, MenuCategory, MenuItem } from '@/src/types'
+import { useAuth } from './useAuth'
 
 export function useMenuBuilder() {
+    const { userRole, user, logout } = useAuth()
     const [restaurants, setRestaurants] = useState<Restaurant[]>([])
     const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null)
     const [categories, setCategories] = useState<MenuCategory[]>([])
@@ -12,24 +14,52 @@ export function useMenuBuilder() {
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [activeFilter, setActiveFilter] = useState<'all' | string>('all')
+    const restaurantsFetchedRef = useRef(false)
 
-    const fetchRestaurants = async () => {
+    const fetchRestaurants = useCallback(async () => {
         try {
-            const response = await fetch('/api/restaurants')
-            if (response.ok) {
-                const data = await response.json()
-                setRestaurants(data)
+            if (!user) {
+                setLoading(false)
+                return
+            }
+
+            // Prevent duplicate fetches
+            if (restaurantsFetchedRef.current) {
+                return
+            }
+
+            restaurantsFetchedRef.current = true
+
+            let query = supabaseClient
+                .from('restaurants')
+                .select('*')
+                .order('created_at', { ascending: false })
+
+            // If user is not admin, filter by owner_id
+            if (userRole !== 'admin') {
+                query = query.eq('owner_id', user.id)
+            }
+
+            const { data, error } = await query
+
+            if (error) {
+                console.error('Error fetching restaurants:', error)
+            } else {
+                setRestaurants(data || [])
             }
         } catch (error) {
             console.error('Error fetching restaurants:', error)
         } finally {
             setLoading(false)
         }
-    }
+    }, [user, userRole])
 
     useEffect(() => {
-        fetchRestaurants()
-    }, [])
+        // Only fetch if we have both user and userRole
+        if (user && userRole !== null) {
+            fetchRestaurants()
+        }
+    }, [user, userRole, fetchRestaurants])
 
     const selectRestaurant = useCallback(async (restaurant: Restaurant) => {
         setSelectedRestaurant(restaurant)
@@ -96,6 +126,7 @@ export function useMenuBuilder() {
         restaurants, selectedRestaurant, categories, items, loading,
         searchTerm, setSearchTerm, activeFilter, setActiveFilter,
         filteredItems, fetchRestaurants, selectRestaurant,
-        deleteItemAction, deleteCategoryAction, moveItem, setItems, setCategories
+        deleteItemAction, deleteCategoryAction, moveItem, setItems, setCategories,
+        userRole, logout
     }
 }
