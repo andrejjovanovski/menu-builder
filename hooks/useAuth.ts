@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabaseClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { UserRole } from '@/src/types'
@@ -13,12 +13,20 @@ export function useAuth() {
     const [authActionLoading, setAuthActionLoading] = useState(false)
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const router = useRouter()
+    const profileFetchedRef = useRef<string | null>(null)
 
     /**
      * Fetches the user's role from the 'profiles' table.
      * This is called automatically when a session is detected.
      */
     const fetchProfile = useCallback(async (userId: string) => {
+        // Prevent duplicate fetches for the same user
+        if (profileFetchedRef.current === userId) {
+            return
+        }
+
+        profileFetchedRef.current = userId
+
         try {
             const { data, error } = await supabaseClient
                 .from('profiles')
@@ -54,6 +62,7 @@ export function useAuth() {
             } else {
                 setUser(null);
                 setUserRole(null);
+                profileFetchedRef.current = null; // Reset on logout
             }
             setLoading(false);
         };

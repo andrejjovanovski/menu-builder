@@ -3,8 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
 // 1. Import these for internationalization
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getLocale } from 'next-intl/server';
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale } from "next-intl/server";
+import AuthProvider from "@/src/components/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +28,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   // 3. Fetch messages and current locale on the server
   const messages = await getMessages();
   const locale = await getLocale();
@@ -40,7 +40,7 @@ export default async function RootLayout({
       >
         {/* 5. Wrap children in the Provider */}
         <NextIntlClientProvider messages={messages} locale={locale}>
-          {children}
+          <AuthProvider>{children}</AuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>

@@ -1,7 +1,11 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { supabaseServer } from '@/lib/supabase'
-import { Restaurant, MenuCategory } from '@/src/types'
+import { MenuCategory, MenuItem } from '@/src/types'
+import RestaurantMenuClient from '@/src/components/public-menu/RestaurantMenuClient'
+
+interface CategoryWithItems extends MenuCategory {
+  items: MenuItem[]
+}
 
 export default async function RestaurantPage({ params }: { params: Promise<{ restaurant: string }> }) {
   const { restaurant: slug } = await params
@@ -15,38 +19,28 @@ export default async function RestaurantPage({ params }: { params: Promise<{ res
     notFound()
   }
 
+  // Fetch all categories
   const { data: categories } = await supabaseServer
     .from('menu_categories')
     .select('*')
     .eq('restaurant_id', restaurant.id)
     .order('order')
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">{restaurant.name}</h1>
-        </div>
-      </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories?.map((category) => (
-            <Link
-              key={category.id}
-              href={`/${restaurant.slug}/${category.slug}`}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-            >
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">{category.name}</h2>
-              <p className="text-gray-600">View items</p>
-            </Link>
-          ))}
-        </div>
-        {(!categories || categories.length === 0) && (
-          <p className="text-center text-gray-500 mt-8">No categories available.</p>
-        )}
-      </main>
-    </div>
-  )
+  // Fetch all items for this restaurant
+  const { data: allItems } = await supabaseServer
+    .from('menu_items')
+    .select('*')
+    .eq('restaurant_id', restaurant.id)
+    .eq('is_available', true)
+    .order('order')
+
+  // Group items by category
+  const categoriesWithItems: CategoryWithItems[] = (categories || []).map(category => ({
+    ...category,
+    items: (allItems || []).filter(item => item.category_id === category.id)
+  }))
+
+  return <RestaurantMenuClient categoriesWithItems={categoriesWithItems} restaurant={restaurant} />
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ restaurant: string }> }) {
