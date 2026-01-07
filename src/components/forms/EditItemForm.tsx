@@ -1,18 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { DollarSign, Save, Loader2 } from 'lucide-react'
+import { DollarSign, Save, Loader2, ImagePlus, X } from 'lucide-react'
 import { Restaurant, MenuCategory, MenuItem } from '@/src/types'
 import { supabaseClient } from '@/lib/supabase'
+import Image from "next/image";
 
 interface EditItemFormProps {
     item: MenuItem
     categories: MenuCategory[]
+    selectedRestaurant: Restaurant
     onUpdate: (updatedItem: MenuItem) => void
     onCancel: () => void
 }
 
-export function EditItemForm({ item, categories, onUpdate, onCancel }: EditItemFormProps) {
+export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, onCancel }: EditItemFormProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         name: item.name,
@@ -22,11 +24,58 @@ export function EditItemForm({ item, categories, onUpdate, onCancel }: EditItemF
         is_available: item.is_available
     })
 
+    // Image Upload State
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(item.image_url || null)
+    const [isUploading, setIsUploading] = useState(false)
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setImageFile(file)
+            setImagePreview(URL.createObjectURL(file))
+        }
+    }
+
+    const handleRemoveImage = () => {
+        setImageFile(null)
+        setImagePreview(null)
+    }
+
+    const uploadImage = async (file: File) => {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${Math.random()}.${fileExt}`
+        const filePath = `${selectedRestaurant.id}/${fileName}`
+
+        const { error: uploadError } = await supabaseClient.storage
+            .from('menu-items')
+            .upload(filePath, file)
+
+        if (uploadError) throw uploadError
+
+        const { data } = supabaseClient.storage
+            .from('menu-items')
+            .getPublicUrl(filePath)
+
+        return data.publicUrl
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
+        setIsUploading(true)
 
         try {
+            let image_url = item.image_url || ''
+            
+            // Handle image upload
+            if (imageFile) {
+                image_url = await uploadImage(imageFile)
+            } else if (imagePreview === null && item.image_url) {
+                // Image was removed
+                image_url = ''
+            }
+
             const { data, error } = await supabaseClient
                 .from('menu_items')
                 .update({
@@ -35,6 +84,7 @@ export function EditItemForm({ item, categories, onUpdate, onCancel }: EditItemF
                     price: parseFloat(formData.price),
                     category_id: formData.category_id,
                     is_available: formData.is_available,
+                    image_url: image_url || null,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', item.id)
@@ -48,12 +98,41 @@ export function EditItemForm({ item, categories, onUpdate, onCancel }: EditItemF
             alert('Failed to update item')
         } finally {
             setLoading(false)
+            setIsUploading(false)
         }
     }
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
+                {/* IMAGE UPLOAD SECTION */}
+                <div>
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">Dish Photo</label>
+                    <div className="relative group">
+                        {imagePreview ? (
+                            <div className="relative h-40 w-full rounded-2xl overflow-hidden border border-slate-200">
+                                <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveImage}
+                                    className="absolute top-2 right-2 p-1.5 bg-slate-900/50 text-white rounded-full backdrop-blur-sm hover:bg-slate-900"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <label className="flex flex-col items-center justify-center w-full h-40 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 transition-all">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <ImagePlus className="w-8 h-8 text-slate-400 mb-2" />
+                                    <p className="text-sm text-slate-500 font-medium">Click to upload photo</p>
+                                    <p className="text-xs text-slate-400 mt-1 uppercase font-bold tracking-tighter">JPG, PNG up to 5MB</p>
+                                </div>
+                                <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                            </label>
+                        )}
+                    </div>
+                </div>
+
                 {/* Name Input */}
                 <div>
                     <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">Item Name</label>
@@ -133,10 +212,10 @@ export function EditItemForm({ item, categories, onUpdate, onCancel }: EditItemF
                 </button>
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || isUploading}
                     className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
                 >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Changes</>}
+                    {loading || isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Changes</>}
                 </button>
             </div>
         </form>

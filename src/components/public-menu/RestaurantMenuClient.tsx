@@ -36,32 +36,32 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
             <div className="relative container max-w-4xl mx-auto px-6 py-8">
                 <MenuHero title={restaurant.name} subtitle={restaurant.subtitle} description={restaurant.description} />
 
-                <div className="border-t border-border my-8" />
+                {/*<div className="border-t border-border my-8" />*/}
 
                 {categoriesWithItems.length > 0 ? (
                     <>
                         {/* First category - default open */}
-                        {firstCategory && (
-                            <>
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.3 }}
-                                    className="text-center mb-12"
-                                >
-                                    <span className="inline-block px-4 py-2 border border-accent/30 text-accent text-xs tracking-[0.2em] uppercase">
-                                        Featured
-                                    </span>
-                                </motion.div>
+                        {/*{firstCategory && (*/}
+                        {/*    <>*/}
+                        {/*        <motion.div*/}
+                        {/*            initial={{ opacity: 0 }}*/}
+                        {/*            animate={{ opacity: 1 }}*/}
+                        {/*            transition={{ delay: 0.3 }}*/}
+                        {/*            className="text-center mb-12"*/}
+                        {/*        >*/}
+                        {/*            <span className="inline-block px-4 py-2 border border-accent/30 text-accent text-xs tracking-[0.2em] uppercase">*/}
+                        {/*                Featured*/}
+                        {/*            </span>*/}
+                        {/*        </motion.div>*/}
 
-                                <MenuSection
-                                    title={firstCategory.name}
-                                    items={transformItems(firstCategory.items)}
-                                    delay={0.2}
-                                    defaultOpen={true}
-                                />
-                            </>
-                        )}
+                        {/*        <MenuSection*/}
+                        {/*            title={firstCategory.name}*/}
+                        {/*            items={transformItems(firstCategory.items)}*/}
+                        {/*            delay={0.2}*/}
+                        {/*            defaultOpen={true}*/}
+                        {/*        />*/}
+                        {/*    </>*/}
+                        {/*)}*/}
 
                         {/* Other categories - default collapsed */}
                         {otherCategories.length > 0 && (
@@ -79,13 +79,13 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
                                     </span>
                                 </motion.div>
 
-                                {otherCategories.map((category, index) => (
+                                {categoriesWithItems.map((category, index) => (
                                     <MenuSection
                                         key={category.id}
                                         title={category.name}
                                         items={transformItems(category.items)}
                                         delay={0.5 + (index * 0.1)}
-                                        defaultOpen={false}
+                                        defaultOpen={index === 0}
                                     />
                                 ))}
                             </>

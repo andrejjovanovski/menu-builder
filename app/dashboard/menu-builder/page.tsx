@@ -267,12 +267,15 @@ export default function MenuBuilderPage() {
         isLoading={isDeleting}
       />
 
-      <EditItemModal
-        item={editingItem}
-        categories={categories}
-        onClose={() => setEditingItem(null)}
-        onUpdated={handleItemUpdate}
-      />
+      {editingItem && selectedRestaurant && (
+        <EditItemModal
+          item={editingItem}
+          categories={categories}
+          selectedRestaurant={selectedRestaurant}
+          onClose={() => setEditingItem(null)}
+          onUpdated={handleItemUpdate}
+        />
+      )}
 
       <RestaurantSettingsModal
         isOpen={isSettingsModalOpen}

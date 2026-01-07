@@ -11,14 +11,22 @@ import {
   Layout,
   Trash2,
   UserCog,
+  Settings,
+  Type,
 } from "lucide-react";
 import { UserRole } from "@/src/types";
 
 // --- Types ---
+type SettingsTab = "general" | "appearance" | "account";
+
 export interface RestaurantSettings {
+  name: string;
+  subtitle: string;
+  slogan: string;
   logoUrl: string;
   appearance: "minimal" | "visual";
   backgroundColor: string;
+  accentColor: string;
   backgroundImageUrl: string;
 }
 
@@ -35,15 +43,6 @@ interface Props {
 }
 
 // --- INTERNAL COMPONENT: ImageUploader ---
-interface ImageUploaderProps {
-  label: string;
-  icon: React.ReactNode;
-  currentImageUrl: string;
-  onFileSelect: (file: File) => void;
-  onClear: () => void;
-  variant?: "light" | "dark";
-}
-
 function ImageUploader({
   label,
   icon,
@@ -51,9 +50,15 @@ function ImageUploader({
   onFileSelect,
   onClear,
   variant = "light",
-}: ImageUploaderProps) {
+}: {
+  label: string;
+  icon: React.ReactNode;
+  currentImageUrl: string;
+  onFileSelect: (file: File) => void;
+  onClear: () => void;
+  variant?: "light" | "dark";
+}) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) onFileSelect(file);
@@ -72,7 +77,6 @@ function ImageUploader({
       >
         {icon} {label}
       </label>
-
       <input
         type="file"
         ref={fileInputRef}
@@ -80,10 +84,9 @@ function ImageUploader({
         accept="image/*"
         className="hidden"
       />
-
       {currentImageUrl ? (
         <div
-          className={`relative group p-2 rounded-3xl border ${borderColor} ${bgColor} flex items-center justify-center overflow-hidden h-44 transition-all`}
+          className={`relative group p-2 rounded-3xl border ${borderColor} ${bgColor} flex items-center justify-center overflow-hidden h-40 transition-all`}
         >
           <img
             src={currentImageUrl}
@@ -108,29 +111,24 @@ function ImageUploader({
       ) : (
         <div
           onClick={() => fileInputRef.current?.click()}
-          className={`cursor-pointer group p-8 rounded-3xl border-2 border-dashed ${borderColor} ${bgColor} flex flex-col items-center justify-center gap-3 transition-all hover:border-indigo-400 h-44`}
+          className={`cursor-pointer group p-6 rounded-3xl border-2 border-dashed ${borderColor} ${bgColor} flex flex-col items-center justify-center gap-2 transition-all hover:border-indigo-400 h-40`}
         >
           <div
-            className={`p-3 rounded-full ${
+            className={`p-2 rounded-full ${
               variant === "light"
                 ? "bg-white text-slate-400 shadow-sm"
                 : "bg-white/10 text-white/60"
             } group-hover:scale-110 transition-transform`}
           >
-            <UploadCloud size={24} />
+            <UploadCloud size={20} />
           </div>
-          <div className="text-center">
-            <p
-              className={`text-sm font-bold ${
-                variant === "light" ? "text-slate-700" : "text-white"
-              }`}
-            >
-              Click to upload
-            </p>
-            <p className="text-[10px] text-slate-400 uppercase tracking-tighter">
-              SVG, PNG, JPG (MAX. 2MB)
-            </p>
-          </div>
+          <p
+            className={`text-xs font-bold ${
+              variant === "light" ? "text-slate-700" : "text-white"
+            }`}
+          >
+            Upload Image
+          </p>
         </div>
       )}
     </div>
@@ -145,11 +143,16 @@ export function RestaurantSettingsModal({
   initialSettings,
   onSave,
 }: Props) {
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [settings, setSettings] = useState<RestaurantSettings>(
     initialSettings || {
+      name: "Your Restaurant",
+      subtitle: "",
+      slogan: "",
       logoUrl: "",
       appearance: "minimal",
+      accentColor: "#6366f1",
       backgroundColor: "#ffffff",
       backgroundImageUrl: "",
     }
@@ -165,11 +168,11 @@ export function RestaurantSettingsModal({
     ? URL.createObjectURL(newBackgroundFile)
     : settings.backgroundImageUrl;
 
+  // Cleanup object URLs to avoid memory leaks
   useEffect(() => {
     return () => {
-      if (newLogoFile) URL.revokeObjectURL(URL.createObjectURL(newLogoFile));
-      if (newBackgroundFile)
-        URL.revokeObjectURL(URL.createObjectURL(newBackgroundFile));
+      if (newLogoFile) URL.revokeObjectURL(logoPreview);
+      if (newBackgroundFile) URL.revokeObjectURL(backgroundPreview);
     };
   }, [newLogoFile, newBackgroundFile]);
 
@@ -178,148 +181,191 @@ export function RestaurantSettingsModal({
       <Modal
         isOpen={isOpen}
         onClose={onClose}
-        title="Menu Appearance"
-        description="Configure your public menu branding and styles."
+        title="Settings"
+        description="Manage your brand identity and menu look."
       >
-        <div className="space-y-8">
-          {/* 1. ADMIN ACTION: PROFILE SETTINGS */}
-          {userRole == "admin" && (
-            <button
-              onClick={() => setIsProfileModalOpen(true)}
-              className="w-full flex items-center justify-between p-4 bg-slate-900 rounded-[32px] text-white hover:bg-slate-800 transition-all group border border-slate-800"
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-indigo-500 p-2.5 rounded-2xl group-hover:rotate-12 transition-transform">
-                  <UserCog size={20} />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold">Profile & Login</p>
-                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest">
-                    Manage email and password
-                  </p>
-                </div>
-              </div>
-              <div className="mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Check size={16} className="text-indigo-400" />
-              </div>
-            </button>
-          )}
-
-          {/* 2. LOGO UPLOAD */}
-          <ImageUploader
-            label="Restaurant Logo"
-            icon={<ImageIcon size={12} />}
-            currentImageUrl={logoPreview}
-            onFileSelect={setNewLogoFile}
-            onClear={() => {
-              setNewLogoFile(null);
-              setSettings({ ...settings, logoUrl: "" });
-            }}
-          />
-
-          {/* 3. LAYOUT SELECTOR */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
-              <Layout size={12} /> Appearance Mode
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() =>
-                  setSettings({ ...settings, appearance: "minimal" })
-                }
-                className={`p-5 rounded-[32px] border-2 text-left transition-all ${
-                  settings.appearance === "minimal"
-                    ? "border-indigo-600 bg-indigo-50/50 shadow-inner"
-                    : "border-slate-100 hover:border-slate-200"
-                }`}
-              >
-                <Palette
-                  className={`mb-3 ${
-                    settings.appearance === "minimal"
-                      ? "text-indigo-600"
-                      : "text-slate-400"
-                  }`}
-                />
-                <p className="font-bold text-slate-900 text-sm">Minimalist</p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-tight font-medium">
-                  Clean solid colors
-                </p>
-              </button>
-
-              <button
-                onClick={() =>
-                  setSettings({ ...settings, appearance: "visual" })
-                }
-                className={`p-5 rounded-[32px] border-2 text-left transition-all ${
-                  settings.appearance === "visual"
-                    ? "border-indigo-600 bg-indigo-50/50 shadow-inner"
-                    : "border-slate-100 hover:border-slate-200"
-                }`}
-              >
-                <ImageIcon
-                  className={`mb-3 ${
-                    settings.appearance === "visual"
-                      ? "text-indigo-600"
-                      : "text-slate-400"
-                  }`}
-                />
-                <p className="font-bold text-slate-900 text-sm">Visual</p>
-                <p className="text-[10px] text-slate-500 uppercase tracking-tight font-medium">
-                  Full image backgrounds
-                </p>
-              </button>
-            </div>
+        <div className="flex flex-col h-[580px]">
+          {/* 1. TABS HEADER */}
+          <div className="flex gap-1 p-1 bg-slate-100 rounded-[20px] mb-6">
+            <TabButton
+              active={activeTab === "general"}
+              onClick={() => setActiveTab("general")}
+              label="General"
+              icon={<Settings size={14} />}
+            />
+            <TabButton
+              active={activeTab === "appearance"}
+              onClick={() => setActiveTab("appearance")}
+              label="Appearance"
+              icon={<Palette size={14} />}
+            />
+            {userRole === "admin" && (
+              <TabButton
+                active={activeTab === "account"}
+                onClick={() => setActiveTab("account")}
+                label="Account"
+                icon={<UserCog size={14} />}
+              />
+            )}
           </div>
 
-          {/* 4. DYNAMIC BACKGROUND SECTION */}
+          {/* 2. SCROLLABLE CONTENT */}
           <div
-            className={`p-6 rounded-[32px] transition-all ${
-              settings.appearance === "minimal"
-                ? "bg-slate-50 border border-slate-100"
-                : "bg-slate-900"
-            }`}
+            className="flex-1 overflow-y-auto pr-2 overflow-x-hidden"
+            style={{ scrollbarWidth: "thin" }}
           >
-            {settings.appearance === "minimal" ? (
-              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
-                <label className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2">
-                  <Palette size={12} /> Accent Color
-                </label>
-                <div className="flex items-center gap-4 p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
-                  <input
-                    type="color"
-                    className="w-10 h-10 rounded-xl cursor-pointer bg-transparent border-none outline-none"
-                    value={settings.backgroundColor}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        backgroundColor: e.target.value,
-                      })
-                    }
-                  />
-                  <span className="font-mono text-sm font-black text-slate-700 tracking-widest uppercase">
-                    {settings.backgroundColor}
-                  </span>
+            {/* GENERAL TAB */}
+            {activeTab === "general" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
+                <ImageUploader
+                  label="Restaurant Logo"
+                  icon={<ImageIcon size={12} />}
+                  currentImageUrl={logoPreview}
+                  onFileSelect={setNewLogoFile}
+                  onClear={() => {
+                    setNewLogoFile(null);
+                    setSettings({ ...settings, logoUrl: "" });
+                  }}
+                />
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5 block px-1">
+                      Restaurant Name (Read-only)
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.name}
+                      readOnly
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-slate-400 cursor-not-allowed font-medium text-sm outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1.5 block px-1">
+                      Subtitle
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Italian Cuisine"
+                      value={settings.subtitle}
+                      onChange={(e) =>
+                        setSettings({ ...settings, subtitle: e.target.value })
+                      }
+                      className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1.5 block px-1">
+                      Slogan
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Best pizza in town"
+                      value={settings.slogan}
+                      onChange={(e) =>
+                        setSettings({ ...settings, slogan: e.target.value })
+                      }
+                      className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                    />
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div className="animate-in fade-in slide-in-from-bottom-2">
-                <ImageUploader
-                  label="Menu Background Image"
-                  icon={<ImageIcon size={12} />}
-                  currentImageUrl={backgroundPreview}
-                  onFileSelect={setNewBackgroundFile}
-                  onClear={() => {
-                    setNewBackgroundFile(null);
-                    setSettings({ ...settings, backgroundImageUrl: "" });
-                  }}
-                  variant="dark"
-                />
+            )}
+
+            {/* APPEARANCE TAB */}
+            {activeTab === "appearance" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-200">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2 px-1">
+                    <Layout size={12} /> Appearance Mode
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <AppearanceCard
+                      selected={settings.appearance === "minimal"}
+                      onClick={() =>
+                        setSettings({ ...settings, appearance: "minimal" })
+                      }
+                      icon={<Palette size={18} />}
+                      title="Minimalist"
+                      desc="Clean & Solid"
+                    />
+                    <AppearanceCard
+                      selected={settings.appearance === "visual"}
+                      onClick={() =>
+                        setSettings({ ...settings, appearance: "visual" })
+                      }
+                      icon={<ImageIcon size={18} />}
+                      title="Visual"
+                      desc="Full Images"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-[32px] bg-slate-50 border border-slate-100">
+                  {settings.appearance === "minimal" ? (
+                    <div className="space-y-5">
+                      <ColorPicker
+                        label="Background Color"
+                        value={settings.backgroundColor}
+                        onChange={(v) =>
+                          setSettings({ ...settings, backgroundColor: v })
+                        }
+                      />
+                      <ColorPicker
+                        label="Accent Color"
+                        value={settings.accentColor}
+                        onChange={(v) =>
+                          setSettings({ ...settings, accentColor: v })
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <ImageUploader
+                      label="Menu Background Image"
+                      icon={<ImageIcon size={12} />}
+                      currentImageUrl={backgroundPreview}
+                      onFileSelect={setNewBackgroundFile}
+                      onClear={() => {
+                        setNewBackgroundFile(null);
+                        setSettings({ ...settings, backgroundImageUrl: "" });
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ACCOUNT TAB */}
+            {activeTab === "account" && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
+                <div className="p-6 bg-indigo-50 rounded-[32px] border border-indigo-100">
+                  <p className="text-xs font-bold text-indigo-700 uppercase tracking-widest mb-2">
+                    Security
+                  </p>
+                  <p className="text-sm text-indigo-600/80 leading-relaxed mb-6">
+                    To update your login credentials or primary email, please
+                    use the secure portal below.
+                  </p>
+                  <button
+                    onClick={() => setIsProfileModalOpen(true)}
+                    className="w-full flex items-center justify-between p-4 bg-slate-900 rounded-2xl text-white hover:bg-slate-800 transition-all group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <UserCog size={18} className="text-indigo-400" />
+                      <span className="text-sm font-bold">Profile & Login</span>
+                    </div>
+                    <Check
+                      size={16}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* 5. ACTIONS */}
-          <div className="flex gap-4 pt-4">
+          {/* 3. FIXED FOOTER */}
+          <div className="flex gap-3 pt-6 mt-auto border-t border-slate-100">
             <button
               onClick={onClose}
               className="flex-1 py-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition"
@@ -334,7 +380,7 @@ export function RestaurantSettingsModal({
                   newBackgroundFile || undefined
                 )
               }
-              className="flex-[2] py-4 bg-indigo-600 text-white rounded-[24px] font-bold text-sm hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+              className="flex-[2] py-4 bg-indigo-600 text-white rounded-[20px] font-bold text-sm hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               <Check size={18} /> Save Changes
             </button>
@@ -342,7 +388,6 @@ export function RestaurantSettingsModal({
         </div>
       </Modal>
 
-      {/* --- EXTERNAL PROFILE MODAL --- */}
       <ProfileSettingsModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
@@ -350,3 +395,82 @@ export function RestaurantSettingsModal({
     </>
   );
 }
+
+// --- HELPERS ---
+function TabButton({
+  active,
+  onClick,
+  label,
+  icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[16px] text-[11px] font-black uppercase tracking-wider transition-all ${
+        active
+          ? "bg-white text-indigo-600 shadow-sm"
+          : "text-slate-500 hover:text-slate-700"
+      }`}
+    >
+      {icon} {label}
+    </button>
+  );
+}
+
+function AppearanceCard({ selected, onClick, icon, title, desc }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className={`p-4 rounded-[24px] border-2 text-left transition-all ${
+        selected
+          ? "border-indigo-600 bg-indigo-50/50"
+          : "border-slate-100 hover:border-slate-200"
+      }`}
+    >
+      <div
+        className={`mb-2 ${selected ? "text-indigo-600" : "text-slate-400"}`}
+      >
+        {icon}
+      </div>
+      <p className="font-bold text-slate-900 text-xs">{title}</p>
+      <p className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">
+        {desc}
+      </p>
+    </button>
+  );
+}
+
+function ColorPicker({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <label className="text-[10px] font-black uppercase text-indigo-600 tracking-widest flex items-center gap-2 px-1">
+        {label}
+      </label>
+      <div className="flex items-center gap-3 p-2 bg-white rounded-xl border border-slate-200">
+        <input
+          type="color"
+          className="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <span className="font-mono text-xs font-bold text-slate-600 uppercase tracking-widest">
+          {value}
+        </span>
+      </div>
+    </div>
+  );
+}
+ 
