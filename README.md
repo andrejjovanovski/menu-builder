@@ -19,6 +19,16 @@ A production-ready multi-tenant restaurant menu web application built with Next.
 - **Deployment**: Vercel
 - **Database**: Supabase PostgreSQL with RLS policies
 
+## Themes
+
+| Name     | --background | --acent | --card  |
+|----------|--------------|---------|---------|
+| Amber    | #161412      | #E19638 | #211E1B |
+| Emerald  | #0D1111      | #2DBF8D | #171C1C |
+| Rose     | #141019      | #F04D95 | #131A21 |
+| Midnight | #0B0E13      | #42B0F0 | #131A21 |
+| Crimson  | #100F0F      | #E11B1B | #1B1919 |
+
 ## Getting Started
 
 ### Prerequisites

@@ -5,8 +5,8 @@
   --foreground: #ededed;
   --accent: #d4af37;
   --muted-foreground: #a1a1aa;
-  --border: #27272a;
-  --card: #18181b;
+  --border: #38332e80;
+  --card: #211f1c;
 }
 
 @theme inline {

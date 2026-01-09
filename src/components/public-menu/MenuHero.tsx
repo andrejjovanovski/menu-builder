@@ -1,42 +1,75 @@
 "use client";
 
 import {motion} from "framer-motion";
+import Image from "next/image";
 
 interface MenuHeroProps {
     title?: string,
     subtitle?: string,
-    description?: string
+    slogan?: string
+    estYear?: string,
+    logoImage?: string
 }
 
-const MenuHero = ({title, subtitle, description}: MenuHeroProps) => {
+const MenuHero = ({ title, subtitle, slogan, estYear, logoImage }: MenuHeroProps) => {
     return (
-        <div className="relative py-16 md:py-24 text-center">
-            <motion.div
-                initial={{opacity: 0, scale: 0.9}}
-                animate={{opacity: 1, scale: 1}}
-                transition={{duration: 0.8}}
-                className="relative z-10"
-            >
-                <div className="mb-4">
-                    <span className="text-accent text-sm tracking-[0.3em] uppercase">Est. 2024</span>
-                </div>
-                <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-foreground mb-4">
-                    {title}
-                </h1>
-                <div className="flex items-center justify-center gap-4 mb-6">
-                    <div className="h-px w-16 bg-linear-to-r from-transparent to-accent"/>
-                    <span className="text-accent text-lg tracking-widest">COCKTAIL BAR</span>
-                    <div className="h-px w-16 bg-linear-to-l from-transparent to-accent"/>
-                </div>
-                <p className="text-muted-foreground max-w-md mx-auto text-lg">
-                    Crafted cocktails & curated spirits in an intimate setting
-                </p>
-            </motion.div>
+        <div className="relative overflow-hidden py-16 text-center md:py-24">
+            {logoImage ? (
+                /* --- Case 1: Display Logo Image --- */
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="relative z-10 flex flex-col items-center"
+                >
+                    <div className="relative mb-6 h-32 w-32 md:h-48 md:w-48">
+                        <Image
+                            alt="priew"
+                            src={logoImage}
+                            fill
+                            className="object-contain rounded-full w-full"
+                            priority
+                        />
+                    </div>
+                    <p className="mx-auto max-w-md text-lg text-muted-foreground">
+                        {slogan}
+                    </p>
+                </motion.div>
+            ) : (
+                <>
+                    {/* --- Case 2: Display Custom Text Logo --- */}
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.8 }}
+                        className="relative z-10"
+                    >
+                        <div className="mb-4">
+                            <span className="text-sm uppercase tracking-[0.3em] text-accent">
+                              Est. {estYear}
+                            </span>
+                        </div>
+                        <h1 className="font-display mb-4 text-5xl text-foreground md:text-7xl lg:text-8xl">
+                            {title}
+                        </h1>
+                        <div className="mb-6 flex items-center justify-center gap-4">
+                            <div className="h-px w-16 bg-gradient-to-r from-transparent to-accent" />
+                            <span className="text-lg uppercase tracking-widest text-accent">
+                          {subtitle}
+                        </span>
+                            <div className="h-px w-16 bg-gradient-to-l from-transparent to-accent" />
+                        </div>
+                        <p className="mx-auto max-w-md text-lg text-muted-foreground">
+                            {slogan}
+                        </p>
+                    </motion.div>
 
-            {/* Decorative elements */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-64 h-64 md:w-96 md:h-96 rounded-full border border-accent/10 animate-pulse"/>
-            </div>
+                    {/* Decorative Background Pulse (Always Visible) */}
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <div className="h-64 w-64 animate-pulse rounded-full border border-accent/10 md:h-96 md:w-96" />
+                    </div>
+                </>
+            )}
         </div>
     );
 };
