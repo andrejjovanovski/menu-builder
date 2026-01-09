@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import {useMemo, useState} from "react";
 import { useMenuBuilder } from "@/hooks/useMenuBuilder";
 import { MenuSidebar } from "@/src/components/menu-builder/MenuSidebar";
 import { ItemCard } from "@/src/components/menu-builder/ItemCard";
@@ -17,10 +17,11 @@ import {
   Utensils,
   Settings,
 } from "lucide-react";
-import { MenuItem } from "@/src/types";
+import {MenuItem, Restaurant, RestaurantSettings} from "@/src/types";
 import { EditItemModal } from "@/src/components/menu-builder/EditItemModal";
 import { RestaurantSettingsModal } from "@/src/components/menu-builder/RestaurantSettingsModal";
 import { useRouter } from "next/navigation";
+import {createClient} from "@/src/utils/supabase/client";
 
 export default function MenuBuilderPage() {
   const router = useRouter();
@@ -91,12 +92,112 @@ export default function MenuBuilderPage() {
     router.push("/login");
   };
 
+  const initialSettings = useMemo(() => {
+    if (!selectedRestaurant) return undefined;
+
+    // We cast to 'any' here because the base 'Restaurant' type might not
+    // include these specific branding columns yet
+    const res = selectedRestaurant as Restaurant;
+
+    return {
+      name: res.name || "",
+      estYear: res.est_year || "",
+      subtitle: res.subtitle || "",
+      slogan: res.slogan || "",
+      logoUrl: res.logo_url || "",
+      appearance: res.appearance || "minimal",
+      backgroundColor: res.background_color || "#ffffff",
+      accentColor: res.accent_color || "#6366f1",
+      cardBgColor: res.card_bg_color || "#ffffff",
+      backgroundImageUrl: res.background_image_url || "",
+    };
+  }, [selectedRestaurant]);
+
+
   if (loading)
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
       </div>
     );
+
+  const handleSaveSettings = async (
+      settings: RestaurantSettings,
+      newLogoFile?: File,
+      newBackgroundFile?: File
+  ) => {
+    if (!selectedRestaurant) return;
+
+    const supabase = createClient(); // Ensure your Supabase client is imported
+    const restaurantId = selectedRestaurant.id;
+
+    try {
+      let logoUrl = settings.logoUrl;
+      let backgroundImageUrl = settings.backgroundImageUrl;
+
+      // 1. Handle Logo Upload
+      if (newLogoFile) {
+        const fileExt = newLogoFile.name.split(".").pop();
+        const fileName = `logo-${Math.random()}.${fileExt}`;
+        const filePath = `${restaurantId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from("restaurant-assets")
+            .upload(filePath, newLogoFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+            .from("restaurant-assets")
+            .getPublicUrl(filePath);
+        logoUrl = data.publicUrl;
+      }
+
+      // 2. Handle Background Image (even if visual is disabled, logic stays for future)
+      if (newBackgroundFile) {
+        const fileExt = newBackgroundFile.name.split(".").pop();
+        const fileName = `bg-${Math.random()}.${fileExt}`;
+        const filePath = `${restaurantId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from("restaurant-assets")
+            .upload(filePath, newBackgroundFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+            .from("restaurant-assets")
+            .getPublicUrl(filePath);
+        backgroundImageUrl = data.publicUrl;
+      }
+
+      // 3. Update Database
+      // Map your frontend interface to your Supabase snake_case columns
+      const { error: dbError } = await supabase
+          .from("restaurants")
+          .update({
+            est_year: settings.estYear,
+            subtitle: settings.subtitle,
+            slogan: settings.slogan,
+            logo_url: logoUrl,
+            appearance: "minimal", // Hardcoded to minimal as requested
+            background_color: settings.backgroundColor,
+            accent_color: settings.accentColor,
+            card_bg_color: settings.cardBgColor,
+            background_image_url: backgroundImageUrl,
+          })
+          .eq("id", restaurantId);
+
+      if (dbError) throw dbError;
+
+      showToast("Settings updated successfully!");
+      fetchRestaurants(); // Refresh local data
+      setIsSettingsModalOpen(false);
+    } catch (error) {
+      console.error("Save error:", error);
+      showToast("Failed to save settings", "error");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex text-slate-900">
@@ -267,20 +368,23 @@ export default function MenuBuilderPage() {
         isLoading={isDeleting}
       />
 
-      <EditItemModal
-        item={editingItem}
-        categories={categories}
-        onClose={() => setEditingItem(null)}
-        onUpdated={handleItemUpdate}
-      />
+      {editingItem && selectedRestaurant && (
+        <EditItemModal
+          item={editingItem}
+          categories={categories}
+          selectedRestaurant={selectedRestaurant}
+          onClose={() => setEditingItem(null)}
+          onUpdated={handleItemUpdate}
+        />
+      )}
 
       <RestaurantSettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        userRole={userRole}
-        onSave={(settings) => {
-          console.log(settings);
-        }}
+          key={selectedRestaurant?.id || "none"}
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          userRole={userRole}
+          initialSettings={initialSettings}
+          onSave={handleSaveSettings}
       />
 
       {/* --- NOTIFICATION LAYER --- */}

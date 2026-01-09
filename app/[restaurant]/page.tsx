@@ -31,7 +31,6 @@ export default async function RestaurantPage({ params }: { params: Promise<{ res
     .from('menu_items')
     .select('*')
     .eq('restaurant_id', restaurant.id)
-    .eq('is_available', true)
     .order('order')
 
   // Group items by category

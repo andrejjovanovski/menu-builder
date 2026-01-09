@@ -5,6 +5,14 @@ export interface Restaurant {
   subtitle: string;
   description: string;
   owner_id: string;
+  logo_url?: string;
+  est_year?: string;
+  appearance?: "minimal" | "visual";
+  background_color?: string;
+  accent_color?: string;
+  card_bg_color?: string;
+  background_image_url?: string;
+  slogan?: string;
   created_at: string;
   updated_at: string;
 }
@@ -76,4 +84,17 @@ export interface UpdateMenuItemInput {
   order?: number;
 }
 
-export type UserRole = 'admin' | 'owner' | null
+export interface RestaurantSettings {
+  name: string;
+  estYear: string;
+  subtitle: string;
+  slogan: string;
+  logoUrl: string;
+  appearance: "minimal" | "visual";
+  backgroundColor: string;
+  accentColor: string;
+  cardBgColor: string;
+  backgroundImageUrl: string;
+}
+
+export type UserRole = 'admin' | 'owner' | null;
