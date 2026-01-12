@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import { Modal } from "../ui/Modal";
@@ -300,10 +300,12 @@ export function RestaurantSettingsModal({
                         />
                         <AppearanceCard
                             selected={settings.appearance === "visual"}
-                            onClick={() =>{}}
+                            onClick={() =>
+                                setSettings({ ...settings, appearance: "visual" })
+                        }
                             icon={<ImageIcon size={18} />}
-                            title="Visual (Soon)"
-                            desc="Coming Soon"
+                            title="Visual"
+                            desc="Custom background image"
                         />
                       </div>
                     </div>
@@ -334,16 +336,32 @@ export function RestaurantSettingsModal({
                             />
                           </div>
                       ) : (
-                          <ImageUploader
-                              label="Menu Background Image"
-                              icon={<ImageIcon size={12} />}
-                              currentImageUrl={backgroundPreview}
-                              onFileSelect={setNewBackgroundFile}
-                              onClear={() => {
-                                setNewBackgroundFile(null);
-                                setSettings({ ...settings, backgroundImageUrl: "" });
-                              }}
-                          />
+                          <div className="space-y-5">
+                              <ImageUploader
+                                  label="Menu Background Image"
+                                  icon={<ImageIcon size={12} />}
+                                  currentImageUrl={backgroundPreview}
+                                  onFileSelect={setNewBackgroundFile}
+                                  onClear={() => {
+                                      setNewBackgroundFile(null);
+                                      setSettings({ ...settings, backgroundImageUrl: "" });
+                                  }}
+                              />
+                              <ColorPicker
+                                  label="Accent Color"
+                                  value={settings.accentColor}
+                                  onChange={(v) =>
+                                      setSettings({ ...settings, accentColor: v })
+                                  }
+                              />
+                              <ColorPicker
+                                  label="Card Background Color"
+                                  value={settings.cardBgColor}
+                                  onChange={(v) =>
+                                      setSettings({ ...settings, cardBgColor: v })
+                                  }
+                              />
+                          </div>
                       )}
                     </div>
                   </div>

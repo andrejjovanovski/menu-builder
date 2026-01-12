@@ -180,7 +180,7 @@ export default function MenuBuilderPage() {
             subtitle: settings.subtitle,
             slogan: settings.slogan,
             logo_url: logoUrl,
-            appearance: "minimal", // Hardcoded to minimal as requested
+            appearance: settings.appearance,
             background_color: settings.backgroundColor,
             accent_color: settings.accentColor,
             card_bg_color: settings.cardBgColor,
