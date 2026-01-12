@@ -31,7 +31,7 @@ const MenuHero = ({ title, subtitle, slogan, estYear, logoImage }: MenuHeroProps
                             priority
                         />
                     </div>
-                    <p className="mx-auto max-w-md text-lg text-muted-foreground">
+                    <p className="mx-auto max-w-md text-lg italic text-accent">
                         {slogan}
                     </p>
                 </motion.div>

@@ -29,20 +29,32 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
     const firstCategory = categoriesWithItems[0]
     const otherCategories = categoriesWithItems.slice(1)
 
+    const isVisualMode = restaurant.appearance === 'visual';
+
     return (
         <div
-            className="min-h-screen bg-background text-foreground"
+            className="min-h-screen text-foreground transition-colors duration-500"
             style={
                 {
+                    // Use CSS variables for colors
                     '--background': restaurant.background_color || '#161412',
                     '--accent': restaurant.accent_color || '#d4af37',
                     '--card': restaurant.card_bg_color || '#211f1c',
-                    ...(restaurant.background_image_url ? { backgroundImage: `url(${restaurant.background_image_url})`, backgroundSize: 'cover', backgroundAttachment: 'fixed' } : {})
+
+                    // Handle Background logic cleanly
+                    backgroundColor: 'var(--background)',
+                    ...(isVisualMode ? {
+                        backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${restaurant.background_image_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundAttachment: 'fixed',
+                        backgroundRepeat: 'no-repeat'
+                    } : {})
                 } as React.CSSProperties
             }
         >
             {/* Subtle background texture */}
-            <div className="fixed inset-0 opacity-[0.02] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbHRlcj0idXJsKCNhKSIvPjwvc3ZnPg==')]" />
+            <div className="fixed inset-0 opacity-[0.02] pointer-events-none" />
 
             <div className="relative container max-w-4xl mx-auto px-6 py-8">
                 <MenuHero title={restaurant.name} subtitle={restaurant.subtitle} slogan={restaurant.slogan} estYear={restaurant.est_year} logoImage={restaurant.logo_url}/>
