@@ -153,6 +153,7 @@ export function RestaurantSettingsModal({
         backgroundColor: "#ffffff",
         cardBgColor: "#ffffff",
         backgroundImageUrl: "",
+        textColor: "#000000",
       }
   );
 
@@ -334,6 +335,13 @@ export function RestaurantSettingsModal({
                                     setSettings({ ...settings, cardBgColor: v })
                                 }
                             />
+                            <ColorPicker
+                                label="Text Color"
+                                value={settings.textColor}
+                                onChange={(v) =>
+                                    setSettings({ ...settings, textColor: v })
+                                }
+                            />
                           </div>
                       ) : (
                           <div className="space-y-5">
@@ -359,6 +367,13 @@ export function RestaurantSettingsModal({
                                   value={settings.cardBgColor}
                                   onChange={(v) =>
                                       setSettings({ ...settings, cardBgColor: v })
+                                  }
+                              />
+                              <ColorPicker
+                                  label="Text Color"
+                                  value={settings.textColor}
+                                  onChange={(v) =>
+                                      setSettings({ ...settings, textColor: v })
                                   }
                               />
                           </div>
