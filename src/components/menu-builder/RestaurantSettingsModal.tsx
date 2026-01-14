@@ -154,6 +154,7 @@ export function RestaurantSettingsModal({
         cardBgColor: "#ffffff",
         backgroundImageUrl: "",
         textColor: "#000000",
+        mutedTextColor: "#555555",
       }
   );
 
@@ -342,6 +343,13 @@ export function RestaurantSettingsModal({
                                     setSettings({ ...settings, textColor: v })
                                 }
                             />
+                              <ColorPicker
+                                label="Muted Text Color"
+                                value={settings.mutedTextColor}
+                                onChange={(v) =>
+                                    setSettings({ ...settings, mutedTextColor: v })
+                                }
+                            />
                           </div>
                       ) : (
                           <div className="space-y-5">
@@ -376,6 +384,13 @@ export function RestaurantSettingsModal({
                                       setSettings({ ...settings, textColor: v })
                                   }
                               />
+                              <ColorPicker
+                                  label="Muted Text Color"
+                                  value={settings.mutedTextColor}
+                                  onChange={(v) =>
+                                      setSettings({ ...settings, mutedTextColor: v })
+                                  }
+                              />
                           </div>
                       )}
                     </div>
@@ -383,6 +398,8 @@ export function RestaurantSettingsModal({
               )}
 
               {activeTab === "account" && (
+                  // Account Settings (only for admin users)
+                  // TODO: IMPLEMENT PAYMENT SETTINGS LATER
                   <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
                     <div className="p-6 bg-indigo-50 rounded-[32px] border border-indigo-100">
                       <p className="text-xs font-bold text-indigo-700 uppercase tracking-widest mb-2">

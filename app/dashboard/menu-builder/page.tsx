@@ -97,8 +97,6 @@ export default function MenuBuilderPage() {
     const initialSettings = useMemo(() => {
         if (!selectedRestaurant) return undefined;
 
-        // We cast to 'any' here because the base 'Restaurant' type might not
-        // include these specific branding columns yet
         const res = selectedRestaurant as Restaurant;
 
         return {
@@ -113,6 +111,7 @@ export default function MenuBuilderPage() {
             cardBgColor: res.card_bg_color || "#ffffff",
             backgroundImageUrl: res.background_image_url || "",
             textColor: res.text_color || "#000000",
+            mutedTextColor: res.muted_text_color || "#6b7280",
         };
     }, [selectedRestaurant]);
 
@@ -188,6 +187,7 @@ export default function MenuBuilderPage() {
                     accent_color: settings.accentColor,
                     card_bg_color: settings.cardBgColor,
                     text_color: settings.textColor,
+                    muted_text_color: settings.mutedTextColor,
                     background_image_url: backgroundImageUrl,
                 })
                 .eq("id", restaurantId);

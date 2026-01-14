@@ -40,6 +40,8 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
                     '--background': restaurant.background_color || '#161412',
                     '--accent': restaurant.accent_color || '#d4af37',
                     '--card': restaurant.card_bg_color || '#211f1c',
+                    '--foreground': restaurant.text_color || '#211f1c',
+                    '--muted-foreground': restaurant.muted_text_color || '#211f1c',
 
                     // Handle Background logic cleanly
                     backgroundColor: 'var(--background)',

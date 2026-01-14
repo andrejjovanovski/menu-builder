@@ -14,6 +14,7 @@ export interface Restaurant {
   background_image_url?: string;
   slogan?: string;
   text_color?: string;
+  muted_text_color?: string;
   created_at: string;
   updated_at: string;
 }
@@ -97,6 +98,7 @@ export interface RestaurantSettings {
   cardBgColor: string;
   backgroundImageUrl: string;
   textColor: string;
+  mutedTextColor: string;
 }
 
 export type UserRole = 'admin' | 'owner' | null;
