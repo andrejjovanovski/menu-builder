@@ -763,10 +763,10 @@ export default function MenuCupLanding() {
               <div className="flex gap-3 items-center">
                 <AtSign size={20} />
                 <a
-                  href="mailto:menucup025@gmail.com"
+                  href="mailto:contact@menucup.com"
                   className="text-indigo-400 font-bold hover:text-white transition-all text-sm block"
                 >
-                  menucup025@gmail.com
+                  contact@menucup.com
                 </a>
               </div>
               <div className="flex gap-3 items-center">
