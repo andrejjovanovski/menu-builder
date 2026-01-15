@@ -19,7 +19,7 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
     const transformItems = (items: MenuItem[]) => items.map(item => ({
         name: item.name,
         description: item.description || '',
-        price: `$${item.price.toFixed(2)}`,
+        price: `${item.price.toFixed(0)} ден.`,
         image: item.image_url,
         is_available: item.is_available,
     }))

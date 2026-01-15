@@ -16,6 +16,7 @@ import {
     Plus,
     Utensils,
     Settings,
+    ScanQrCode
 } from "lucide-react";
 import {MenuItem, Restaurant, RestaurantSettings} from "@/src/types";
 import {EditItemModal} from "@/src/components/menu-builder/EditItemModal";
@@ -203,6 +204,30 @@ export default function MenuBuilderPage() {
         }
     };
 
+    // --- NEW HANDLER FOR CATEGORY UPDATE --- 
+    const handleCategoryUpdate = async (id: string, name: string) => {
+        const supabase = createClient();
+        try {
+            const {error} = await supabase
+                .from("menu_categories")
+                .update({name: name.trim()})
+                .eq("id", id);
+
+            if (error) throw error;
+
+            // Optimistically update local state and show toast
+            setCategories(prevCategories =>
+                prevCategories.map(cat => 
+                    cat.id === id ? { ...cat, name: name.trim() } : cat
+                )
+            );
+            showToast("Category updated successfully!");
+        } catch (error) {
+            console.error("Error updating category:", error);
+            showToast("Failed to update category", "error");
+        }
+    };
+
     return (
          <div className="h-screen bg-[#F8FAFC] flex text-slate-900 overflow-hidden">
              <MenuSidebar
@@ -231,14 +256,14 @@ export default function MenuBuilderPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="p-8 max-w-5xl mx-auto space-y-8">
+                    <div className="p-8 max-w-6xl mt-8 mx-auto space-y-8">
                         {/* STICKY HEADER */}
                         <header
-                            className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm sticky top-0 z-10">
+                            className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm md:sticky  top-0 z-10">
                             <div>
-                                <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+                                <a href={`${window.location.origin}/${selectedRestaurant.slug}`} target={"_blank"} className="text-3xl font-black text-slate-900 tracking-tight hover:cursor-pointer">
                                     {selectedRestaurant.name}
-                                </h1>
+                                </a>
                                 <p className="text-slate-600 font-bold mt-1 uppercase text-[10px] tracking-widest">
                                     Menu Management
                                 </p>
@@ -246,7 +271,7 @@ export default function MenuBuilderPage() {
 
                             <div className="flex flex-wrap items-center gap-3">
                                 <div
-                                    className="flex items-center gap-2 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+                                    className="flex items-center gap-2 w-full md:w-60 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
                                     <Search className="w-4 h-4 text-slate-500"/>
                                     <input
                                         type="text"
@@ -262,18 +287,26 @@ export default function MenuBuilderPage() {
                                 >
                                     <Plus className="w-4 h-4"/> Add Item
                                 </button>
-                                <button
-                                    onClick={() => setIsCatModalOpen(true)}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all"
-                                >
-                                    <List className="w-4 h-4 text-indigo-600"/> Categories
-                                </button>
-                                <button
-                                    onClick={() => setIsSettingsModalOpen(true)}
-                                    className="flex items-center cursor-pointer gap-2 px-5 py-2.5 bg-gray-600 text-white font-bold rounded-2xl hover:bg-gray-700 transition-all shadow-lg shadow-indigo-100"
-                                >
-                                    <Settings className="w-5 h-5"/>
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setIsCatModalOpen(true)}
+                                        className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all"
+                                    >
+                                        <List className="w-4 h-4 text-indigo-600"/> Categories
+                                    </button>
+                                    <button
+                                        onClick={() => setIsSettingsModalOpen(true)}
+                                        className="flex items-center cursor-pointer gap-2 px-5 py-2.5 bg-gray-600 text-white font-bold rounded-2xl hover:bg-gray-700 transition-all shadow-lg shadow-indigo-100"
+                                    >
+                                        <Settings className="w-5 h-5"/>
+                                    </button>
+                                    <button
+                                        onClick={() => setIsQRCodeModalOpen(true)}
+                                        className="flex items-center cursor-pointer gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                                    >
+                                        <ScanQrCode className="w-5 h-5"/>
+                                    </button>
+                                </div>
                             </div>
                         </header>
 
@@ -315,6 +348,7 @@ export default function MenuBuilderPage() {
                                 {filteredItems.length > 0 ? (
                                     filteredItems.map((item: MenuItem, idx: number) => (
                                         <ItemCard
+                                            index={idx}
                                             key={item.id}
                                             item={item}
                                             categoryName={
@@ -353,6 +387,7 @@ export default function MenuBuilderPage() {
                         setCategories([...categories, cat]);
                         showToast(`Category "${cat.name}" added`);
                     }}
+                    onCategoryUpdate={handleCategoryUpdate} // Pass the new handler
                 />
             )}
 

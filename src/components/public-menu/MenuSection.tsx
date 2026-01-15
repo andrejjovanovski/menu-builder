@@ -61,8 +61,8 @@ const MenuItemCard = ({ item, index, delay }: { item: MenuItem; index: number; d
                             {item.name}
                         </h3>
                         <span className="shrink-0 font-sans text-sm font-semibold text-accent">
-              {item.price}
-            </span>
+                          {item.price}
+                        </span>
                     </div>
                     <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground md:text-sm">
                         {item.description}
