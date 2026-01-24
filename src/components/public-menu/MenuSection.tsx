@@ -78,7 +78,7 @@ const MenuItemCard = ({ item, index, delay }: { item: MenuItem; index: number; d
             key={item.name}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: delay + index * 0.1 }}
+            transition={{ duration: 0.2, delay: delay + index * 0.1 }}
             className="group col-span-2 md:col-span-3"
         >
             <div className="flex items-baseline justify-between gap-4">
