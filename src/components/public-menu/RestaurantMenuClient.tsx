@@ -108,7 +108,7 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
                                         key={category.id}
                                         title={category.name}
                                         items={transformItems(category.items)}
-                                        delay={0.5 + (index * 0.1)}
+                                        delay={0.03 + (index * 0.1)}
                                         defaultOpen={index === 0}
                                     />
                                 ))}
