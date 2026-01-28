@@ -1,13 +1,13 @@
 "use client";
 
-import {useMemo, useState} from "react";
-import {useMenuBuilder} from "@/hooks/useMenuBuilder";
-import {MenuSidebar} from "@/src/components/menu-builder/MenuSidebar";
-import {ItemCard} from "@/src/components/menu-builder/ItemCard";
-import {CategoryModal} from "@/src/components/menu-builder/CategoryModal";
-import {ItemModal} from "@/src/components/menu-builder/ItemModal";
-import {DeleteItemModal} from "@/src/components/menu-builder/DeleteItemModal";
-import {Toast, ToastType} from "@/src/components/ui/Toast";
+import { useMemo, useState } from "react";
+import { useMenuBuilder } from "@/hooks/useMenuBuilder";
+import { MenuSidebar } from "@/src/components/menu-builder/MenuSidebar";
+import { ItemCard } from "@/src/components/menu-builder/ItemCard";
+import { CategoryModal } from "@/src/components/menu-builder/CategoryModal";
+import { ItemModal } from "@/src/components/menu-builder/ItemModal";
+import { DeleteItemModal } from "@/src/components/menu-builder/DeleteItemModal";
+import { Toast, ToastType } from "@/src/components/ui/Toast";
 import {
     Search,
     List,
@@ -18,12 +18,12 @@ import {
     Settings,
     ScanQrCode
 } from "lucide-react";
-import {MenuItem, Restaurant, RestaurantSettings} from "@/src/types";
-import {EditItemModal} from "@/src/components/menu-builder/EditItemModal";
-import {RestaurantSettingsModal} from "@/src/components/menu-builder/RestaurantSettingsModal";
-import {useRouter} from "next/navigation";
-import {createClient} from "@/src/utils/supabase/client";
-import {QRCodeModal} from "@/src/components/menu-builder/QRCodeModal";
+import { MenuItem, Restaurant, RestaurantSettings, MenuCategory } from "@/src/types";
+import { EditItemModal } from "@/src/components/menu-builder/EditItemModal";
+import { RestaurantSettingsModal } from "@/src/components/menu-builder/RestaurantSettingsModal";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/src/utils/supabase/client";
+import { QRCodeModal } from "@/src/components/menu-builder/QRCodeModal";
 
 export default function MenuBuilderPage() {
     const router = useRouter();
@@ -63,7 +63,7 @@ export default function MenuBuilderPage() {
     } | null>(null);
 
     const showToast = (message: string, type: ToastType = "success") => {
-        setToast({message, type});
+        setToast({ message, type });
     };
 
     // --- Interaction Handlers ---
@@ -113,6 +113,8 @@ export default function MenuBuilderPage() {
             backgroundImageUrl: res.background_image_url || "",
             textColor: res.text_color || "#000000",
             mutedTextColor: res.muted_text_color || "#6b7280",
+            footerQuote: res.footer_quote || "",
+            openHours: res.open_hours || "",
         };
     }, [selectedRestaurant]);
 
@@ -120,7 +122,7 @@ export default function MenuBuilderPage() {
     if (loading)
         return (
             <div className="flex h-screen items-center justify-center bg-slate-50">
-                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin"/>
+                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
             </div>
         );
 
@@ -144,13 +146,13 @@ export default function MenuBuilderPage() {
                 const fileName = `logo-${Math.random()}.${fileExt}`;
                 const filePath = `${restaurantId}/${fileName}`;
 
-                const {error: uploadError} = await supabase.storage
+                const { error: uploadError } = await supabase.storage
                     .from("restaurant-assets")
-                    .upload(filePath, newLogoFile, {upsert: true});
+                    .upload(filePath, newLogoFile, { upsert: true });
 
                 if (uploadError) throw uploadError;
 
-                const {data} = supabase.storage
+                const { data } = supabase.storage
                     .from("restaurant-assets")
                     .getPublicUrl(filePath);
                 logoUrl = data.publicUrl;
@@ -162,13 +164,13 @@ export default function MenuBuilderPage() {
                 const fileName = `bg-${Math.random()}.${fileExt}`;
                 const filePath = `${restaurantId}/${fileName}`;
 
-                const {error: uploadError} = await supabase.storage
+                const { error: uploadError } = await supabase.storage
                     .from("restaurant-assets")
-                    .upload(filePath, newBackgroundFile, {upsert: true});
+                    .upload(filePath, newBackgroundFile, { upsert: true });
 
                 if (uploadError) throw uploadError;
 
-                const {data} = supabase.storage
+                const { data } = supabase.storage
                     .from("restaurant-assets")
                     .getPublicUrl(filePath);
                 backgroundImageUrl = data.publicUrl;
@@ -176,7 +178,7 @@ export default function MenuBuilderPage() {
 
             // 3. Update Database
             // Map your frontend interface to your Supabase snake_case columns
-            const {error: dbError} = await supabase
+            const { error: dbError } = await supabase
                 .from("restaurants")
                 .update({
                     est_year: settings.estYear,
@@ -190,6 +192,8 @@ export default function MenuBuilderPage() {
                     text_color: settings.textColor,
                     muted_text_color: settings.mutedTextColor,
                     background_image_url: backgroundImageUrl,
+                    footer_quote: settings.footerQuote,
+                    open_hours: settings.openHours,
                 })
                 .eq("id", restaurantId);
 
@@ -208,16 +212,16 @@ export default function MenuBuilderPage() {
     const handleCategoryUpdate = async (id: string, name: string) => {
         const supabase = createClient();
         try {
-            const {error} = await supabase
+            const { error } = await supabase
                 .from("menu_categories")
-                .update({name: name.trim()})
+                .update({ name: name.trim() })
                 .eq("id", id);
 
             if (error) throw error;
 
             // Optimistically update local state and show toast
             setCategories(prevCategories =>
-                prevCategories.map(cat => 
+                prevCategories.map(cat =>
                     cat.id === id ? { ...cat, name: name.trim() } : cat
                 )
             );
@@ -228,24 +232,47 @@ export default function MenuBuilderPage() {
         }
     };
 
+    // --- HANDLER FOR CATEGORY REORDERING ---
+    const handleCategoryReorder = async (reorderedCategories: MenuCategory[]) => {
+        const supabase = createClient();
+        try {
+            // Update all categories with their new order values
+            const updates = reorderedCategories.map((cat, index) =>
+                supabase
+                    .from("menu_categories")
+                    .update({ order: index })
+                    .eq("id", cat.id)
+            );
+
+            await Promise.all(updates);
+
+            // Update local state
+            setCategories(reorderedCategories);
+            showToast("Categories reordered successfully!");
+        } catch (error) {
+            console.error("Error reordering categories:", error);
+            showToast("Failed to reorder categories", "error");
+        }
+    };
+
     return (
-         <div className="h-screen bg-[#F8FAFC] flex text-slate-900 overflow-hidden">
-             <MenuSidebar
-                 restaurants={restaurants}
-                 selectedId={selectedRestaurant?.id}
-                 onSelect={selectRestaurant}
-                 onRefresh={fetchRestaurants}
-                 userRole={userRole}
-                 onLogout={handleLogout}
-             />
- 
-             <main className="flex-1 min-w-0 overflow-y-auto">
+        <div className="h-screen bg-[#F8FAFC] flex text-slate-900 overflow-hidden">
+            <MenuSidebar
+                restaurants={restaurants}
+                selectedId={selectedRestaurant?.id}
+                onSelect={selectRestaurant}
+                onRefresh={fetchRestaurants}
+                userRole={userRole}
+                onLogout={handleLogout}
+            />
+
+            <main className="flex-1 min-w-0 overflow-y-auto">
                 {!selectedRestaurant ? (
                     <div className="h-full flex items-center justify-center p-12 text-center">
                         <div className="max-w-sm">
                             <div
                                 className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-200 inline-block mb-6">
-                                <Store className="w-12 h-12 text-slate-400"/>
+                                <Store className="w-12 h-12 text-slate-400" />
                             </div>
                             <h3 className="text-2xl font-bold text-slate-900">
                                 No Restaurant Selected
@@ -272,7 +299,7 @@ export default function MenuBuilderPage() {
                             <div className="flex flex-wrap items-center gap-3">
                                 <div
                                     className="flex items-center gap-2 w-full md:w-60 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
-                                    <Search className="w-4 h-4 text-slate-500"/>
+                                    <Search className="w-4 h-4 text-slate-500" />
                                     <input
                                         type="text"
                                         placeholder="Search menu..."
@@ -285,26 +312,26 @@ export default function MenuBuilderPage() {
                                     onClick={() => setIsItemModalOpen(true)}
                                     className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
                                 >
-                                    <Plus className="w-4 h-4"/> Add Item
+                                    <Plus className="w-4 h-4" /> Add Item
                                 </button>
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => setIsCatModalOpen(true)}
                                         className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-900 font-bold rounded-2xl hover:bg-slate-50 transition-all"
                                     >
-                                        <List className="w-4 h-4 text-indigo-600"/> Categories
+                                        <List className="w-4 h-4 text-indigo-600" /> Categories
                                     </button>
                                     <button
                                         onClick={() => setIsSettingsModalOpen(true)}
                                         className="flex items-center cursor-pointer gap-2 px-5 py-2.5 bg-gray-600 text-white font-bold rounded-2xl hover:bg-gray-700 transition-all shadow-lg shadow-indigo-100"
                                     >
-                                        <Settings className="w-5 h-5"/>
+                                        <Settings className="w-5 h-5" />
                                     </button>
                                     <button
                                         onClick={() => setIsQRCodeModalOpen(true)}
                                         className="flex items-center cursor-pointer gap-2 px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
                                     >
-                                        <ScanQrCode className="w-5 h-5"/>
+                                        <ScanQrCode className="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>
@@ -317,7 +344,7 @@ export default function MenuBuilderPage() {
                                 className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${activeFilter === "all"
                                     ? "bg-slate-900 text-white shadow-xl"
                                     : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
-                                }`}
+                                    }`}
                             >
                                 All Dishes
                             </button>
@@ -328,7 +355,7 @@ export default function MenuBuilderPage() {
                                     className={`px-6 py-3 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${activeFilter === cat.id
                                         ? "bg-indigo-600 text-white shadow-xl"
                                         : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
-                                    }`}
+                                        }`}
                                 >
                                     {cat.name}
                                 </button>
@@ -339,7 +366,7 @@ export default function MenuBuilderPage() {
                         <div className="space-y-4">
                             <div className="flex items-center justify-between px-2">
                                 <h2 className="text-xl font-black text-slate-900 flex items-center gap-2 italic uppercase tracking-tighter">
-                                    <Utensils className="w-6 h-6 text-indigo-500"/>
+                                    <Utensils className="w-6 h-6 text-indigo-500" />
                                     Live Preview
                                 </h2>
                             </div>
@@ -387,7 +414,8 @@ export default function MenuBuilderPage() {
                         setCategories([...categories, cat]);
                         showToast(`Category "${cat.name}" added`);
                     }}
-                    onCategoryUpdate={handleCategoryUpdate} // Pass the new handler
+                    onCategoryUpdate={handleCategoryUpdate}
+                    onCategoryReorder={handleCategoryReorder}
                 />
             )}
 

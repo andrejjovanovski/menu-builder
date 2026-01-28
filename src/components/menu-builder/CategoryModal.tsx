@@ -1,8 +1,8 @@
 
 'use client'
 
-import { X, Edit3, Trash2, Check, XCircle } from 'lucide-react' // Added Check and XCircle for save/cancel
-import React, { useState } from 'react' // Import React and useState
+import { X, Edit3, Trash2, Check, XCircle, GripVertical } from 'lucide-react'
+import React, { useState } from 'react'
 import { MenuCategory, Restaurant } from '@/src/types'
 import { CreateCategoryForm } from '../forms/CreateCategoryForm'
 
@@ -12,7 +12,8 @@ interface CategoryModalProps {
     onClose: () => void
     onDeleteCategory: (id: string) => void
     onCategoryCreated: (cat: MenuCategory) => void
-    onCategoryUpdate: (id: string, name: string) => void // New prop for updating category
+    onCategoryUpdate: (id: string, name: string) => void
+    onCategoryReorder: (reorderedCategories: MenuCategory[]) => void
 }
 
 export function CategoryModal({
@@ -21,11 +22,14 @@ export function CategoryModal({
     onClose,
     onDeleteCategory,
     onCategoryCreated,
-    onCategoryUpdate // Destructure the new prop
+    onCategoryUpdate,
+    onCategoryReorder
 }: CategoryModalProps) {
 
     const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
     const [editedCategoryName, setEditedCategoryName] = useState<string>('');
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
     const handleEditClick = (cat: MenuCategory) => {
         setEditingCategoryId(cat.id);
@@ -40,10 +44,9 @@ export function CategoryModal({
     const handleSaveEdit = () => {
         if (editingCategoryId && editedCategoryName.trim()) {
             onCategoryUpdate(editingCategoryId, editedCategoryName.trim());
-            setEditingCategoryId(null); // Exit edit mode
+            setEditingCategoryId(null);
             setEditedCategoryName('');
         } else if (editingCategoryId) {
-            // If name is empty, cancel edit.
             handleCancelEdit();
         }
     };
@@ -52,13 +55,55 @@ export function CategoryModal({
         setEditedCategoryName(e.target.value);
     };
 
-    // Handle Enter key to save, Escape key to cancel
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             handleSaveEdit();
         } else if (e.key === 'Escape') {
             handleCancelEdit();
         }
+    };
+
+    // Drag and Drop handlers
+    const handleDragStart = (index: number) => {
+        setDraggedIndex(index);
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        setDragOverIndex(index);
+    };
+
+    const handleDragLeave = () => {
+        setDragOverIndex(null);
+    };
+
+    const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+        e.preventDefault();
+
+        if (draggedIndex === null || draggedIndex === dropIndex) {
+            setDraggedIndex(null);
+            setDragOverIndex(null);
+            return;
+        }
+
+        const reordered = [...categories];
+        const [draggedItem] = reordered.splice(draggedIndex, 1);
+        reordered.splice(dropIndex, 0, draggedItem);
+
+        // Update order values
+        const updatedCategories = reordered.map((cat, idx) => ({
+            ...cat,
+            order: idx
+        }));
+
+        onCategoryReorder(updatedCategories);
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedIndex(null);
+        setDragOverIndex(null);
     };
 
     return (
@@ -80,8 +125,22 @@ export function CategoryModal({
                 <div className="mt-8 space-y-2">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Existing Categories</p>
                     <div className="max-h-60 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-slate-200">
-                        {categories.map(cat => (
-                            <div key={cat.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group">
+                        {categories.map((cat, index) => (
+                            <div
+                                key={cat.id}
+                                draggable={editingCategoryId !== cat.id}
+                                onDragStart={() => handleDragStart(index)}
+                                onDragOver={(e) => handleDragOver(e, index)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) => handleDrop(e, index)}
+                                onDragEnd={handleDragEnd}
+                                className={`flex items-center justify-between p-4 bg-slate-50 rounded-2xl border transition-all ${draggedIndex === index
+                                        ? 'opacity-50 border-slate-300'
+                                        : dragOverIndex === index
+                                            ? 'border-indigo-500 bg-indigo-50'
+                                            : 'border-slate-100'
+                                    } group`}
+                            >
                                 {editingCategoryId === cat.id ? (
                                     // Input field for editing
                                     <>
@@ -91,21 +150,26 @@ export function CategoryModal({
                                             onChange={handleNameChange}
                                             onKeyDown={handleKeyDown}
                                             className="flex-grow p-2 mr-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                                            autoFocus // Automatically focus the input when it appears
+                                            autoFocus
                                         />
                                         <div className="flex items-center gap-1">
                                             <button onClick={handleSaveEdit} className="p-2 hover:bg-white rounded-xl text-green-600 hover:text-green-800 transition-colors">
-                                                <Check className="w-4 h-4" /> {/* Save icon */}
+                                                <Check className="w-4 h-4" />
                                             </button>
                                             <button onClick={handleCancelEdit} className="p-2 hover:bg-white rounded-xl text-red-400 hover:text-red-600 transition-colors">
-                                                <XCircle className="w-4 h-4" /> {/* Cancel icon */}
+                                                <XCircle className="w-4 h-4" />
                                             </button>
                                         </div>
                                     </>
                                 ) : (
                                     // Display category name and edit/delete buttons
                                     <>
-                                        <span className="font-bold text-slate-700">{cat.name}</span>
+                                        <div className="flex items-center gap-3 flex-grow">
+                                            <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition-colors">
+                                                <GripVertical className="w-5 h-5" />
+                                            </div>
+                                            <span className="font-bold text-slate-700">{cat.name}</span>
+                                        </div>
                                         <div className="flex items-center gap-1">
                                             <button onClick={() => handleEditClick(cat)} className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-indigo-600 transition-colors">
                                                 <Edit3 className="w-4 h-4" />

@@ -15,6 +15,8 @@ export interface Restaurant {
   slogan?: string;
   text_color?: string;
   muted_text_color?: string;
+  footer_quote?: string;
+  open_hours?: string;
   created_at: string;
   updated_at: string;
 }
@@ -99,6 +101,8 @@ export interface RestaurantSettings {
   backgroundImageUrl: string;
   textColor: string;
   mutedTextColor: string;
+  openHours: string;
+  footerQuote: string;
 }
 
 export type UserRole = 'admin' | 'owner' | null;
