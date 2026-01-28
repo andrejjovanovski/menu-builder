@@ -155,6 +155,8 @@ export function RestaurantSettingsModal({
         backgroundImageUrl: "",
         textColor: "#000000",
         mutedTextColor: "#555555",
+        footerQuote: "",
+        openHours: "",
       }
   );
 
@@ -280,6 +282,34 @@ export function RestaurantSettingsModal({
                             className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
                         />
                       </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1.5 block px-1">
+                                Open hours
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Open Tuesday – Sunday • 5pm – 2am"
+                                value={settings.openHours}
+                                onChange={(e) =>
+                                    setSettings({ ...settings, openHours: e.target.value })
+                                }
+                                className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-1.5 block px-1">
+                                Footer quote
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="e.g. Best pizza in town"
+                                value={settings.footerQuote}
+                                onChange={(e) =>
+                                    setSettings({ ...settings, footerQuote: e.target.value })
+                                }
+                                className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
+                            />
+                        </div>
                     </div>
                   </div>
               )}

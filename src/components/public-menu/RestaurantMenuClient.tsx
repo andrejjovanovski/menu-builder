@@ -125,6 +125,7 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
                     </motion.p>
                 )}
 
+                {/*TODO: Change the hardcoded text in the footer*/}
                 {/* Footer */}
                 <motion.footer
                     initial={{ opacity: 0 }}
@@ -133,10 +134,10 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
                     className="mt-16 pt-8 border-t border-border text-center"
                 >
                     <p className="text-muted-foreground text-sm mb-2">
-                        Open Tuesday – Sunday • 5pm – 2am
+                        {restaurant.open_hours}
                     </p>
                     <p className="text-muted-foreground/60 text-xs">
-                        Please drink responsibly • 21+ only
+                        {restaurant.footer_quote}
                     </p>
                 </motion.footer>
             </div>
