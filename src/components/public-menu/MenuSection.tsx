@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from "react";
+import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
@@ -48,9 +48,9 @@ const MenuItemCard = ({ item, index, delay }: { item: MenuItem; index: number; d
 
                     {!isAvailable && (
                         <div className="absolute inset-0 flex items-center justify-center bg-background/30">
-              <span className="rounded-full bg-accent/90 px-3 py-1.5 text-xs font-semibold text-accent-foreground shadow-lg">
-                Coming Soon
-              </span>
+                            <span className="rounded-full bg-accent/90 px-3 py-1.5 text-xs font-semibold text-accent-foreground shadow-lg">
+                                Coming Soon
+                            </span>
                         </div>
                     )}
                 </div>
@@ -61,7 +61,7 @@ const MenuItemCard = ({ item, index, delay }: { item: MenuItem; index: number; d
                             {item.name}
                         </h3>
                         <span className="shrink-0 font-sans text-sm font-semibold text-accent">
-                          {item.price}
+                            {item.price}
                         </span>
                     </div>
                     <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground md:text-sm">
@@ -79,12 +79,19 @@ const MenuItemCard = ({ item, index, delay }: { item: MenuItem; index: number; d
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.2, delay: delay + index * 0.1 }}
-            className="group col-span-2 md:col-span-3"
+            className={`group col-span-2 md:col-span-3 ${!isAvailable ? "opacity-60" : ""}`}
         >
             <div className="flex items-baseline justify-between gap-4">
-                <h3 className="font-display text-lg text-foreground transition-colors duration-300 group-hover:text-accent md:text-xl">
-                    {item.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                    <h3 className="font-display text-lg text-foreground transition-colors duration-300 group-hover:text-accent md:text-xl">
+                        {item.name}
+                    </h3>
+                    {!isAvailable && (
+                        <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                            Coming Soon
+                        </span>
+                    )}
+                </div>
                 <div className="mb-1 flex-1 border-b border-dashed border-muted-foreground/30" />
                 <span className="font-sans font-medium text-accent">{item.price}</span>
             </div>

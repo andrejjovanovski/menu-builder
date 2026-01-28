@@ -125,7 +125,6 @@ export default function RestaurantMenuClient({ categoriesWithItems, restaurant }
                     </motion.p>
                 )}
 
-                {/*TODO: Change the hardcoded text in the footer*/}
                 {/* Footer */}
                 <motion.footer
                     initial={{ opacity: 0 }}
