@@ -17,6 +17,10 @@ export interface Restaurant {
   muted_text_color?: string;
   footer_quote?: string;
   open_hours?: string;
+  facebook_url?: string;
+  instagram_url?: string;
+  tiktok_url?: string;
+  phone?: string;
   created_at: string;
   updated_at: string;
 }
@@ -103,6 +107,10 @@ export interface RestaurantSettings {
   mutedTextColor: string;
   openHours: string;
   footerQuote: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  phone?: string;
 }
 
 export type UserRole = 'admin' | 'owner' | null;
