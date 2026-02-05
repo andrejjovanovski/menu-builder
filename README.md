@@ -114,17 +114,30 @@ CREATE TABLE menu_items (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Payments (admin-managed; requires profiles.role = 'admin')
+CREATE TABLE payments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+  expiration_date DATE NOT NULL,
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'expired', 'canceled')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create indexes
 CREATE INDEX idx_restaurants_slug ON restaurants(slug);
 CREATE INDEX idx_menu_categories_restaurant_id ON menu_categories(restaurant_id);
 CREATE INDEX idx_menu_categories_slug ON menu_categories(slug);
 CREATE INDEX idx_menu_items_category_id ON menu_items(category_id);
 CREATE INDEX idx_menu_items_restaurant_id ON menu_items(restaurant_id);
+CREATE INDEX idx_payments_restaurant_id ON payments(restaurant_id);
 
 -- Enable RLS
 ALTER TABLE restaurants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
 CREATE POLICY "Public read restaurants" ON restaurants FOR SELECT USING (true);
@@ -138,6 +151,11 @@ CREATE POLICY "Owners manage menu_categories" ON menu_categories FOR ALL USING (
 CREATE POLICY "Public read menu_items" ON menu_items FOR SELECT USING (true);
 CREATE POLICY "Owners manage menu_items" ON menu_items FOR ALL USING (
   EXISTS (SELECT 1 FROM restaurants WHERE id = menu_items.restaurant_id AND owner_id = auth.uid())
+);
+
+-- Payments: only admins (profiles.role = 'admin') can read/write
+CREATE POLICY "Admins manage payments" ON payments FOR ALL USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
 );
 ```
 

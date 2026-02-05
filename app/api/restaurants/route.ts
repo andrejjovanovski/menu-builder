@@ -56,11 +56,29 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body: CreateRestaurantInput = await request.json()
+    const body = await request.json()
+    const { name, slug } = body as CreateRestaurantInput
+    if (!name?.trim() || !slug?.trim()) {
+      return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 })
+    }
+
+    // Optional fields for onboarding / full registration
+    const optional: Record<string, unknown> = {}
+    const optionalKeys = [
+      'subtitle', 'description', 'est_year', 'slogan', 'open_hours', 'footer_quote',
+      'phone', 'facebook_url', 'instagram_url', 'tiktok_url', 'appearance',
+      'background_color', 'accent_color', 'card_bg_color', 'text_color', 'muted_text_color',
+      'open_bottom_sheet_on_click',
+    ] as const
+    for (const key of optionalKeys) {
+      if (body[key] !== undefined && body[key] !== null && body[key] !== '') {
+        optional[key] = body[key]
+      }
+    }
 
     const { data, error } = await supabase
       .from('restaurants')
-      .insert({ ...body, owner_id: user.id })
+      .insert({ name: name.trim(), slug: slug.trim(), owner_id: user.id, ...optional })
       .select()
       .single()
 

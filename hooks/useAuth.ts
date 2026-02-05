@@ -103,8 +103,40 @@ export function useAuth() {
                 return { success: false }
             }
 
-            // Redirection is handled by the useEffect listener or manual router push
             router.push('/dashboard/menu-builder')
+            return { success: true }
+        } catch (err) {
+            setErrorMsg('An unexpected error occurred.')
+            return { success: false }
+        } finally {
+            setAuthActionLoading(false)
+        }
+    }
+
+    /**
+     * Sign up (register) – then redirect to onboarding, or to login with message if email confirmation is required
+     */
+    const signUp = async (email: string, password: string) => {
+        setAuthActionLoading(true)
+        setErrorMsg(null)
+
+        try {
+            const { data, error } = await supabaseClient.auth.signUp({
+                email,
+                password,
+                options: { emailRedirectTo: `${typeof window !== 'undefined' ? window.location.origin : ''}/onboarding` },
+            })
+
+            if (error) {
+                setErrorMsg(error.message)
+                return { success: false }
+            }
+
+            if (data.session) {
+                router.push('/onboarding')
+            } else {
+                router.push('/login?message=confirm_email')
+            }
             return { success: true }
         } catch (err) {
             setErrorMsg('An unexpected error occurred.')
@@ -133,6 +165,7 @@ export function useAuth() {
         authActionLoading,
         errorMsg,
         login,
+        signUp,
         logout,
     }
 }
