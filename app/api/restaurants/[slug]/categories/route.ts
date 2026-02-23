@@ -68,16 +68,22 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Check ownership
   const { data: restaurant, error: restError } = await supabase
     .from('restaurants')
-    .select('id')
+    .select('id, owner_id')
     .eq('slug', slug)
-    .eq('owner_id', user.id)
     .single()
 
   if (restError || !restaurant) {
-    return NextResponse.json({ error: 'Restaurant not found or access denied' }, { status: 404 })
+    return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+  }
+
+  const isOwner = restaurant.owner_id === user.id
+  if (!isOwner) {
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') {
+      return NextResponse.json({ error: 'Restaurant not found or access denied' }, { status: 404 })
+    }
   }
 
   try {
