@@ -3,7 +3,6 @@ import { createServerClient } from '@supabase/ssr'
 import { CreatePaymentInput } from '@/src/types'
 
 async function requireAdmin(request: NextRequest) {
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,10 +28,6 @@ export async function GET(request: NextRequest) {
   if (!supabase) return NextResponse.json({ error: 'Server error' }, { status: 500 })
 
   const { data, error: fetchError } = await supabase
-
-  if (!supabase) return NextResponse.json({ error: 'Server error' }, { status: 500 })
-
-  const { data, error } = await supabase
     .from('payments')
     .select('*')
     .order('created_at', { ascending: false })
@@ -69,9 +64,4 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json(data)
 }
