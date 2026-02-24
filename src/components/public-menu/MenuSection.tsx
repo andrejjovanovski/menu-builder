@@ -18,14 +18,25 @@ interface MenuSectionProps {
     items: MenuItem[];
     delay?: number;
     defaultOpen?: boolean;
+    onItemWithImageClick?: (item: MenuItem) => void;
 }
 
 // --- Sub-components ---
 
-const MenuItemCard = ({ item, index, delay }: { item: MenuItem; index: number; delay: number }) => {
+const MenuItemCard = ({
+    item,
+    index,
+    delay,
+    onItemWithImageClick,
+}: {
+    item: MenuItem;
+    index: number;
+    delay: number;
+    onItemWithImageClick?: (item: MenuItem) => void;
+}) => {
     const isAvailable = item.is_available !== false;
 
-    // Visual style for items WITH images
+    // Visual style for items WITH images (clickable → opens bottom sheet)
     if (item.image) {
         return (
             <motion.div
@@ -33,12 +44,21 @@ const MenuItemCard = ({ item, index, delay }: { item: MenuItem; index: number; d
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
-                className="group relative overflow-hidden rounded-xl border border-border/50 bg-card transition-all duration-300 hover:border-accent/50"
+                role="button"
+                tabIndex={0}
+                onClick={() => onItemWithImageClick?.(item)}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onItemWithImageClick?.(item);
+                    }
+                }}
+                className="group relative cursor-pointer overflow-hidden rounded-xl border border-border/50 bg-card transition-all duration-300 hover:border-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
             >
                 <div className="relative">
                     <div className={`aspect-square overflow-hidden ${!isAvailable ? "grayscale blur-[2px]" : ""}`}>
                         <Image
-                            width={400} // Increased for better quality
+                            width={400}
                             height={400}
                             src={item.image}
                             alt={item.name}
@@ -104,7 +124,7 @@ const MenuItemCard = ({ item, index, delay }: { item: MenuItem; index: number; d
 
 // --- Main Component ---
 
-const MenuSection = ({ title, items, delay = 0, defaultOpen = true }: MenuSectionProps) => {
+const MenuSection = ({ title, items, delay = 0, defaultOpen = true, onItemWithImageClick }: MenuSectionProps) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     // Group items: Images first, then text-only
@@ -154,6 +174,7 @@ const MenuSection = ({ title, items, delay = 0, defaultOpen = true }: MenuSectio
                                     item={item}
                                     index={index}
                                     delay={delay}
+                                    onItemWithImageClick={onItemWithImageClick}
                                 />
                             ))}
                         </div>
