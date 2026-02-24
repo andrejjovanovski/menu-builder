@@ -25,8 +25,8 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // 2. DASHBOARD PROTECTION
-  if (pathname.startsWith('/dashboard') && !user) {
+  // 2. PROTECTED ROUTES (dashboard, onboarding)
+  if ((pathname.startsWith('/dashboard') || pathname.startsWith('/onboarding')) && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 

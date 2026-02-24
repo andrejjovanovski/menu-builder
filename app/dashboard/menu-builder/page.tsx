@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useMenuBuilder } from "@/hooks/useMenuBuilder";
 import { MenuSidebar } from "@/src/components/menu-builder/MenuSidebar";
 import { ItemCard } from "@/src/components/menu-builder/ItemCard";
@@ -23,12 +23,16 @@ import {
   Restaurant,
   RestaurantSettings,
   MenuCategory,
+  Payment,
+  PaymentStatusDisplay,
 } from "@/src/types";
 import { EditItemModal } from "@/src/components/menu-builder/EditItemModal";
 import { RestaurantSettingsModal } from "@/src/components/menu-builder/RestaurantSettingsModal";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/utils/supabase/client";
 import { QRCodeModal } from "@/src/components/menu-builder/QRCodeModal";
+import { PaymentsModal } from "@/src/components/menu-builder/PaymentsModal";
+import { getPaymentDisplayStatus } from "@/src/utils/paymentStatus";
 
 export default function MenuBuilderPage() {
   const router = useRouter();
@@ -59,6 +63,39 @@ export default function MenuBuilderPage() {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isQRCodeModalOpen, setIsQRCodeModalOpen] = useState(false);
+  const [isPaymentsModalOpen, setIsPaymentsModalOpen] = useState(false);
+  const [payments, setPayments] = useState<Payment[]>([]);
+
+  const fetchPayments = useCallback(async () => {
+    if (userRole !== "admin") return;
+    try {
+      const res = await fetch("/api/payments");
+      if (res.ok) {
+        const data = await res.json();
+        setPayments(data);
+      }
+    } catch {}
+  }, [userRole]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [fetchPayments]);
+
+  const paymentStatusByRestaurantId = useMemo((): Record<string, PaymentStatusDisplay> => {
+    if (userRole !== "admin" || payments.length === 0) return {};
+    const byRestaurant = new Map<string, Payment>();
+    for (const p of payments) {
+      const existing = byRestaurant.get(p.restaurant_id);
+      if (!existing || new Date(p.created_at) > new Date(existing.created_at)) {
+        byRestaurant.set(p.restaurant_id, p);
+      }
+    }
+    const out: Record<string, PaymentStatusDisplay> = {};
+    byRestaurant.forEach((p, restaurantId) => {
+      out[restaurantId] = getPaymentDisplayStatus(p);
+    });
+    return out;
+  }, [userRole, payments]);
 
   // --- UI Feedback States ---
   const [isDeleting, setIsDeleting] = useState(false);
@@ -278,6 +315,8 @@ export default function MenuBuilderPage() {
         onRefresh={fetchRestaurants}
         userRole={userRole}
         onLogout={handleLogout}
+        paymentStatusByRestaurantId={paymentStatusByRestaurantId}
+        onOpenPayments={userRole === "admin" ? () => setIsPaymentsModalOpen(true) : undefined}
       />
 
       <main className="flex-1 min-w-0 overflow-y-auto">
@@ -480,6 +519,15 @@ export default function MenuBuilderPage() {
           onClose={() => setIsQRCodeModalOpen(false)}
           restaurantSlug={selectedRestaurant.slug}
           restaurantName={selectedRestaurant.name}
+        />
+      )}
+
+      {userRole === "admin" && (
+        <PaymentsModal
+          isOpen={isPaymentsModalOpen}
+          onClose={() => setIsPaymentsModalOpen(false)}
+          restaurants={restaurants}
+          onPaymentsChange={fetchPayments}
         />
       )}
 

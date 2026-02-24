@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { UtensilsCrossed, LogOut, Menu, X } from "lucide-react";
+import { UtensilsCrossed, LogOut, Menu, X, CreditCard } from "lucide-react";
 import { Restaurant } from "@/src/types";
 import { CreateRestaurantForm } from "../forms/CreateRestaurantForm";
 import { UserRole } from "@/src/types";
+import type { PaymentStatusDisplay } from "@/src/types";
+import { PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "@/src/utils/paymentStatus";
 
 interface Props {
   restaurants: Restaurant[];
@@ -13,6 +15,8 @@ interface Props {
   onRefresh: () => void;
   onLogout: () => void;
   userRole: UserRole;
+  paymentStatusByRestaurantId?: Record<string, PaymentStatusDisplay>;
+  onOpenPayments?: () => void;
 }
 
 export function MenuSidebar({
@@ -22,6 +26,8 @@ export function MenuSidebar({
   onRefresh,
   onLogout,
   userRole,
+  paymentStatusByRestaurantId = {},
+  onOpenPayments,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -77,28 +83,51 @@ export function MenuSidebar({
 
         {/* Middle Section: Scrollable Nav */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          <p className="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-            {userRole === "admin" ? "All" : "My"} Restaurants
-          </p>
-          {restaurants.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => {
-                onSelect(r);
-                setIsOpen(false);
-              }}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all ${
-                selectedId === r.id
-                  ? "bg-indigo-50 text-indigo-700 font-bold"
-                  : "text-slate-500 hover:bg-slate-50"
-              }`}
-            >
-              <span className="truncate">{r.name}</span>
-              {selectedId === r.id && (
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-600" />
-              )}
-            </button>
-          ))}
+          <div className="flex items-center justify-between px-3 mb-2">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              {userRole === "admin" ? "All" : "My"} Restaurants
+            </p>
+            {userRole === "admin" && onOpenPayments && (
+              <button
+                type="button"
+                onClick={onOpenPayments}
+                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                aria-label="Manage payments"
+              >
+                <CreditCard className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          {restaurants.map((r) => {
+            const paymentStatus = paymentStatusByRestaurantId[r.id];
+            return (
+              <button
+                key={r.id}
+                onClick={() => {
+                  onSelect(r);
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl transition-all ${
+                  selectedId === r.id
+                    ? "bg-indigo-50 text-indigo-700 font-bold"
+                    : "text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  {userRole === "admin" && paymentStatus != null && (
+                    <span
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${PAYMENT_STATUS_COLORS[paymentStatus]}`}
+                      title={PAYMENT_STATUS_LABELS[paymentStatus]}
+                    />
+                  )}
+                  <span className="truncate">{r.name}</span>
+                </span>
+                {selectedId === r.id && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0" />
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Bottom Section: Logout Button */}

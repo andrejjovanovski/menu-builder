@@ -116,3 +116,31 @@ export interface RestaurantSettings {
 }
 
 export type UserRole = 'admin' | 'owner' | null;
+
+// Payment status stored in DB; "expires_soon" is derived in UI when status is active and expiration is near
+export type PaymentStatus = 'active' | 'expired' | 'canceled';
+
+export type PaymentStatusDisplay = 'active' | 'expires_soon' | 'expired' | 'canceled';
+
+export interface Payment {
+  id: string;
+  restaurant_id: string;
+  expiration_date: string; // ISO date
+  notes: string | null;
+  status: PaymentStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatePaymentInput {
+  restaurant_id: string;
+  expiration_date: string;
+  notes?: string | null;
+  status?: PaymentStatus;
+}
+
+export interface UpdatePaymentInput {
+  expiration_date?: string;
+  notes?: string | null;
+  status?: PaymentStatus;
+}
