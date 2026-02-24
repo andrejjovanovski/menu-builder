@@ -27,12 +27,12 @@ export async function GET(request: NextRequest) {
   if (error) return error
   if (!supabase) return NextResponse.json({ error: 'Server error' }, { status: 500 })
 
-  const { data, err } = await supabase
+  const { data, error: fetchError } = await supabase
     .from('payments')
     .select('*')
     .order('created_at', { ascending: false })
 
-  if (err) return NextResponse.json({ error: err.message }, { status: 500 })
+  if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 500 })
   return NextResponse.json(data || [])
 }
 
