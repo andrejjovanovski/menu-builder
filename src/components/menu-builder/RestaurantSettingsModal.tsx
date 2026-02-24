@@ -158,6 +158,7 @@ export function RestaurantSettingsModal({
       mutedTextColor: "#555555",
       footerQuote: "",
       openHours: "",
+      openBottomSheetOnClick: true,
       facebookUrl: "",
       instagramUrl: "",
       tiktokUrl: "",
@@ -323,6 +324,36 @@ export function RestaurantSettingsModal({
                       }
                       className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm font-medium"
                     />
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">
+                        Open bottom sheet on card click
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        When enabled, tapping a product card with an image opens a detail sheet.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.openBottomSheetOnClick}
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          openBottomSheetOnClick: !settings.openBottomSheetOnClick,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                        settings.openBottomSheetOnClick ? "bg-indigo-600" : "bg-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
+                          settings.openBottomSheetOnClick ? "translate-x-5" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>

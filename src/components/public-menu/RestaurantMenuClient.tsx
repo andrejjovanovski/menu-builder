@@ -4,6 +4,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MenuHero from "@/src/components/public-menu/MenuHero";
 import MenuSection from "@/src/components/public-menu/MenuSection";
+import ProductBottomSheet, {
+  type ProductBottomSheetItem,
+} from "@/src/components/public-menu/ProductBottomSheet";
 import { CircleEllipsis, Facebook, Instagram, Phone, X } from "lucide-react";
 import { MenuItem, MenuCategory, Restaurant } from "@/src/types";
 
@@ -39,6 +42,7 @@ export default function RestaurantMenuClient({
   restaurant,
 }: RestaurantMenuClientProps) {
   const [isSocialOpen, setIsSocialOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<ProductBottomSheetItem | null>(null);
 
   const transformItems = (items: MenuItem[]) =>
     items.map((item) => ({
@@ -112,7 +116,7 @@ export default function RestaurantMenuClient({
         } as React.CSSProperties
       }
     >
-      {/* Full-screen Blur Backdrop */}
+      {/* Full-screen Blur Backdrop (socials) */}
       <AnimatePresence>
         {isSocialOpen && (
           <motion.div
@@ -125,8 +129,10 @@ export default function RestaurantMenuClient({
         )}
       </AnimatePresence>
 
+      <ProductBottomSheet item={selectedItem} onClose={() => setSelectedItem(null)} />
+
       {/* Floating Menu Container */}
-      <div className="fixed bottom-6 left-5 z-50 flex flex-col items-start gap-4">
+      <div className="fixed bottom-6 left-5 z-40 flex flex-col items-start gap-4">
         {/* The Social Box (Opens upwards) */}
         <AnimatePresence>
           {isSocialOpen && (
@@ -178,16 +184,18 @@ export default function RestaurantMenuClient({
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsSocialOpen(!isSocialOpen)}
-          className="w-12 h-12 rounded-full bg-accent border-2 border-black flex items-center justify-center shadow-lg transition-transform"
+          className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform border border-accent/20"
+          style={{ backgroundColor: "var(--card)" }}
         >
           <motion.div
             animate={{ rotate: isSocialOpen ? 90 : 0 }}
             transition={{ duration: 0.2 }}
+            style={{ color: "var(--accent)" }}
           >
             {isSocialOpen ? (
-              <X className="text-black" />
+              <X size={20} />
             ) : (
-              <CircleEllipsis className="text-black" />
+              <CircleEllipsis size={20} />
             )}
           </motion.div>
         </motion.button>
@@ -212,6 +220,7 @@ export default function RestaurantMenuClient({
                 items={transformItems(category.items)}
                 delay={0.03 + index * 0.1}
                 defaultOpen={index === 0}
+                onItemWithImageClick={restaurant.open_bottom_sheet_on_click !== false ? setSelectedItem : undefined}
               />
             ))}
           </div>

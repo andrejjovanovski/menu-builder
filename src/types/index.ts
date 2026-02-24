@@ -21,6 +21,7 @@ export interface Restaurant {
   instagram_url?: string;
   tiktok_url?: string;
   phone?: string;
+  open_bottom_sheet_on_click?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -107,6 +108,7 @@ export interface RestaurantSettings {
   mutedTextColor: string;
   openHours: string;
   footerQuote: string;
+  openBottomSheetOnClick: boolean;
   facebookUrl?: string;
   instagramUrl?: string;
   tiktokUrl?: string;
