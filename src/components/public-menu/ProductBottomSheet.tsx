@@ -2,12 +2,15 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { toTagLabel } from "@/src/utils/menuTags";
 
 export interface ProductBottomSheetItem {
   name: string;
   description: string;
   price: string;
   image?: string;
+  dietary_tags?: string[];
+  allergen_tags?: string[];
   is_available?: boolean;
 }
 
@@ -80,6 +83,44 @@ export default function ProductBottomSheet({ item, onClose }: ProductBottomSheet
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                   {item.description || "No description."}
                 </p>
+                {(item.dietary_tags?.length || item.allergen_tags?.length) ? (
+                  <div className="mt-4 space-y-3">
+                    {!!item.dietary_tags?.length && (
+                      <div>
+                        <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
+                          Dietary
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {item.dietary_tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300"
+                            >
+                              {toTagLabel(tag, "dietary")}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {!!item.allergen_tags?.length && (
+                      <div>
+                        <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-rose-300">
+                          Allergens
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {item.allergen_tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full bg-rose-500/10 px-3 py-1 text-xs font-medium text-rose-200"
+                            >
+                              {toTagLabel(tag, "allergen")}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </div>
           </motion.div>

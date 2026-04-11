@@ -23,7 +23,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
   const confirmEmailMessage = searchParams.get('message') === 'confirm_email'
 
-  const { login, loading, errorMsg } = useAuth()
+  const { login, authActionLoading: loading, errorMsg } = useAuth()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
         {/* FOOTER LINKS */}
         <p className="text-center text-slate-500 text-sm font-medium">
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-bold decoration-2 underline-offset-4">
             Create account
           </Link>

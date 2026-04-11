@@ -34,7 +34,7 @@ export default async function RootLayout({
 
   return (
     // 4. Update the lang attribute to be dynamic
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { supabaseServer } from '@/lib/supabase'
-import { MenuCategory, MenuItem } from '@/src/types'
+import { getRestaurantBySlug, getRestaurantCategories, getRestaurantItems } from '@/lib/repositories'
+import { MenuCategory, MenuItem, Restaurant } from '@/src/types'
 import RestaurantMenuClient from '@/src/components/public-menu/RestaurantMenuClient'
 
 interface CategoryWithItems extends MenuCategory {
@@ -9,34 +9,20 @@ interface CategoryWithItems extends MenuCategory {
 
 export default async function RestaurantPage({ params }: { params: Promise<{ restaurant: string }> }) {
   const { restaurant: slug } = await params
-  const { data: restaurant, error } = await supabaseServer
-    .from('restaurants')
-    .select('*')
-    .eq('slug', slug)
-    .single()
+  const restaurant = await getRestaurantBySlug(slug) as Restaurant | null
 
-  if (error || !restaurant) {
+  if (!restaurant) {
     notFound()
   }
 
-  // Fetch all categories
-  const { data: categories } = await supabaseServer
-    .from('menu_categories')
-    .select('*')
-    .eq('restaurant_id', restaurant.id)
-    .order('order')
+  const [categories, allItems] = await Promise.all([
+    getRestaurantCategories(restaurant.id),
+    getRestaurantItems(restaurant.id),
+  ]) as [MenuCategory[], MenuItem[]]
 
-  // Fetch all items for this restaurant
-  const { data: allItems } = await supabaseServer
-    .from('menu_items')
-    .select('*')
-    .eq('restaurant_id', restaurant.id)
-    .order('order')
-
-  // Group items by category
-  const categoriesWithItems: CategoryWithItems[] = (categories || []).map(category => ({
+  const categoriesWithItems: CategoryWithItems[] = (categories || []).map((category) => ({
     ...category,
-    items: (allItems || []).filter(item => item.category_id === category.id)
+    items: (allItems || []).filter((item) => item.category_id === category.id),
   }))
 
   return <RestaurantMenuClient categoriesWithItems={categoriesWithItems} restaurant={restaurant} />
@@ -44,11 +30,7 @@ export default async function RestaurantPage({ params }: { params: Promise<{ res
 
 export async function generateMetadata({ params }: { params: Promise<{ restaurant: string }> }) {
   const { restaurant: slug } = await params
-  const { data: restaurant } = await supabaseServer
-    .from('restaurants')
-    .select('name')
-    .eq('slug', slug)
-    .single()
+  const restaurant = await getRestaurantBySlug(slug)
 
   return {
     title: restaurant ? `${restaurant.name} Menu` : 'Restaurant Menu',

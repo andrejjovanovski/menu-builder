@@ -1,14 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import MenuHero from "@/src/components/public-menu/MenuHero";
 import MenuSection from "@/src/components/public-menu/MenuSection";
+import { AskRecommendationSheet } from "@/src/components/public-menu/AskRecommendationSheet";
+import { FeedbackPrompt } from "@/src/components/public-menu/FeedbackPrompt";
 import ProductBottomSheet, {
   type ProductBottomSheetItem,
 } from "@/src/components/public-menu/ProductBottomSheet";
-import { CircleEllipsis, Facebook, Instagram, Phone, X } from "lucide-react";
+import { ChevronDown, CircleEllipsis, Facebook, Filter, Instagram, Phone, X } from "lucide-react";
 import { MenuItem, MenuCategory, Restaurant } from "@/src/types";
+import { trackRestaurantEvent } from "@/src/utils/analytics";
+import { ALLERGEN_TAGS, DIETARY_TAGS } from "@/src/utils/menuTags";
 
 // TikTok icon (Lucide does not ship one) – minimal “note” shape
 function TiktokIcon({ size = 18 }: { size?: number }) {
@@ -43,6 +47,9 @@ export default function RestaurantMenuClient({
 }: RestaurantMenuClientProps) {
   const [isSocialOpen, setIsSocialOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProductBottomSheetItem | null>(null);
+  const [selectedDietaryTags, setSelectedDietaryTags] = useState<string[]>([]);
+  const [avoidedAllergenTags, setAvoidedAllergenTags] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const transformItems = (items: MenuItem[]) =>
     items.map((item) => ({
@@ -50,6 +57,8 @@ export default function RestaurantMenuClient({
       description: item.description || "",
       price: `${item.price.toFixed(0)} ден.`,
       image: item.image_url,
+      dietary_tags: item.dietary_tags || [],
+      allergen_tags: item.allergen_tags || [],
       is_available: item.is_available,
     }));
 
@@ -94,6 +103,39 @@ export default function RestaurantMenuClient({
       : []),
   ];
 
+  const filteredCategories = useMemo(() => {
+    return categoriesWithItems
+      .map((category) => ({
+        ...category,
+        items: category.items.filter((item) => {
+          const itemDietaryTags = item.dietary_tags || [];
+          const itemAllergenTags = item.allergen_tags || [];
+
+          const matchesDietary = selectedDietaryTags.every((tag) =>
+            itemDietaryTags.includes(tag)
+          );
+          const avoidsAllergens = avoidedAllergenTags.every(
+            (tag) => !itemAllergenTags.includes(tag)
+          );
+
+          return matchesDietary && avoidsAllergens;
+        }),
+      }))
+      .filter((category) => category.items.length > 0);
+  }, [categoriesWithItems, selectedDietaryTags, avoidedAllergenTags]);
+
+  const hasActiveFilters =
+    selectedDietaryTags.length > 0 || avoidedAllergenTags.length > 0;
+  const activeFilterCount =
+    selectedDietaryTags.length + avoidedAllergenTags.length;
+
+  useEffect(() => {
+    void trackRestaurantEvent({
+      restaurantSlug: restaurant.slug,
+      eventType: "menu_view",
+    });
+  }, [restaurant.slug]);
+
   return (
     <div
       className="min-h-screen text-foreground transition-colors duration-500"
@@ -130,6 +172,15 @@ export default function RestaurantMenuClient({
       </AnimatePresence>
 
       <ProductBottomSheet item={selectedItem} onClose={() => setSelectedItem(null)} />
+      {restaurant.recommendation_ai_enabled !== false && (
+        <AskRecommendationSheet
+          restaurantSlug={restaurant.slug}
+          restaurantName={restaurant.name}
+        />
+      )}
+      {restaurant.feedback_enabled !== false && (
+        <FeedbackPrompt restaurantSlug={restaurant.slug} />
+      )}
 
       {/* Floating Menu Container */}
       <div className="fixed bottom-6 left-5 z-40 flex flex-col items-start gap-4">
@@ -211,22 +262,129 @@ export default function RestaurantMenuClient({
           logoImage={restaurant.logo_url}
         />
 
-        {categoriesWithItems.length > 0 ? (
+        {restaurant.menu_filters_enabled !== false && (
+        <section className="mt-8 rounded-[28px] border border-accent/15 bg-[var(--card)]/70 backdrop-blur-md overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsFilterOpen((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Filter size={16} className="text-[var(--accent)]" />
+                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+                  Filter the menu
+                </h3>
+                {hasActiveFilters && (
+                  <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-bold text-black">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {hasActiveFilters
+                  ? `${selectedDietaryTags.length} dietary and ${avoidedAllergenTags.length} allergen filter${activeFilterCount === 1 ? "" : "s"} active`
+                  : "Tap to show dietary and allergen filters"}
+              </p>
+            </div>
+
+            <motion.div
+              animate={{ rotate: isFilterOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="shrink-0 text-[var(--accent)]"
+            >
+              <ChevronDown size={18} />
+            </motion.div>
+          </button>
+
+          <AnimatePresence initial={false}>
+            {(isFilterOpen || hasActiveFilters) && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-4 border-t border-white/10 px-5 pb-5 pt-4">
+                  <FilterGroup
+                    title="Show only"
+                    options={DIETARY_TAGS}
+                    selected={selectedDietaryTags}
+                    onToggle={(value) =>
+                      setSelectedDietaryTags((prev) =>
+                        prev.includes(value)
+                          ? prev.filter((tag) => tag !== value)
+                          : [...prev, value]
+                      )
+                    }
+                  />
+                  <FilterGroup
+                    title="Avoid allergens"
+                    options={ALLERGEN_TAGS}
+                    selected={avoidedAllergenTags}
+                    onToggle={(value) =>
+                      setAvoidedAllergenTags((prev) =>
+                        prev.includes(value)
+                          ? prev.filter((tag) => tag !== value)
+                          : [...prev, value]
+                      )
+                    }
+                  />
+
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDietaryTags([]);
+                        setAvoidedAllergenTags([]);
+                      }}
+                      className="text-sm font-medium text-[var(--accent)] hover:opacity-80"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+        )}
+
+        {filteredCategories.length > 0 ? (
           <div className="mt-8">
-            {categoriesWithItems.map((category, index) => (
+            {filteredCategories.map((category, index) => (
               <MenuSection
                 key={category.id}
                 title={category.name}
                 items={transformItems(category.items)}
                 delay={0.03 + index * 0.1}
                 defaultOpen={index === 0}
-                onItemWithImageClick={restaurant.open_bottom_sheet_on_click !== false ? setSelectedItem : undefined}
+                onItemWithImageClick={
+                  restaurant.open_bottom_sheet_on_click !== false
+                    ? (item) => {
+                        const sourceItem = category.items.find(
+                          (candidate) => candidate.name === item.name
+                        );
+                        if (sourceItem?.id) {
+                          void trackRestaurantEvent({
+                            restaurantSlug: restaurant.slug,
+                            eventType: "item_open",
+                            itemId: sourceItem.id,
+                          });
+                        }
+                        setSelectedItem(item);
+                      }
+                    : undefined
+                }
               />
             ))}
           </div>
         ) : (
           <p className="text-center text-muted-foreground mt-8">
-            No menu items available.
+            {hasActiveFilters
+              ? "No menu items match your current filters."
+              : "No menu items available."}
           </p>
         )}
 
@@ -238,6 +396,45 @@ export default function RestaurantMenuClient({
             {restaurant.footer_quote}
           </p>
         </footer>
+      </div>
+    </div>
+  );
+}
+
+function FilterGroup({
+  title,
+  options,
+  selected,
+  onToggle,
+}: {
+  title: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  selected: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {title}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = selected.includes(option.value);
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onToggle(option.value)}
+              className={`rounded-full border px-3 py-2 text-xs font-medium transition ${
+                active
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-black"
+                  : "border-white/10 bg-black/10 text-muted-foreground hover:border-[var(--accent)]/40 hover:text-foreground"
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

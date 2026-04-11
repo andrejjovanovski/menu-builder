@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
-import { supabaseServer } from '@/lib/supabase'
-import { MenuItem, MenuCategory, Restaurant } from '@/src/types'
+import { getCategoryBySlug, getRestaurantBySlug } from '@/lib/repositories'
+import { query } from '@/lib/db'
+import { MenuItem, Restaurant, MenuCategory } from '@/src/types'
 
 export default async function CategoryPage({
   params,
@@ -10,36 +10,24 @@ export default async function CategoryPage({
   params: Promise<{ restaurant: string; category: string }>
 }) {
   const { restaurant: restSlug, category: catSlug } = await params
-  // Get restaurant
-  const { data: restaurant } = await supabaseServer
-    .from('restaurants')
-    .select('*')
-    .eq('slug', restSlug)
-    .single()
+  const restaurant = await getRestaurantBySlug(restSlug) as Restaurant | null
 
   if (!restaurant) {
     notFound()
   }
 
-  // Get category
-  const { data: category } = await supabaseServer
-    .from('menu_categories')
-    .select('*')
-    .eq('restaurant_id', restaurant.id)
-    .eq('slug', catSlug)
-    .single()
+  const category = await getCategoryBySlug(restaurant.id, catSlug) as MenuCategory | null
 
   if (!category) {
     notFound()
   }
 
-  // Get items
-  const { data: items } = await supabaseServer
-    .from('menu_items')
-    .select('*')
-    .eq('category_id', category.id)
-    .eq('is_available', true)
-    .order('order')
+  const itemsResult = await query<MenuItem>(
+    'select * from menu_items where category_id = $1 and is_available = true order by "order" asc, created_at asc',
+    [category.id]
+  )
+
+  const items = itemsResult.rows
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,11 +49,10 @@ export default async function CategoryPage({
             <div key={item.id} className="bg-white rounded-lg shadow-md overflow-hidden">
               {item.image_url && (
                 <div className="relative h-48">
-                  <Image
+                  <img
                     src={item.image_url}
                     alt={item.name}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full object-cover"
                   />
                 </div>
               )}
@@ -74,7 +61,7 @@ export default async function CategoryPage({
                 {item.description && (
                   <p className="text-gray-600 mb-4">{item.description}</p>
                 )}
-                <p className="text-2xl font-bold text-green-600">${item.price.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-green-600">${Number(item.price).toFixed(2)}</p>
               </div>
             </div>
           ))}
@@ -93,17 +80,8 @@ export async function generateMetadata({
   params: Promise<{ restaurant: string; category: string }>
 }) {
   const { restaurant: restSlug, category: catSlug } = await params
-  const { data: restaurant } = await supabaseServer
-    .from('restaurants')
-    .select('name')
-    .eq('slug', restSlug)
-    .single()
-
-  const { data: category } = await supabaseServer
-    .from('menu_categories')
-    .select('name')
-    .eq('slug', catSlug)
-    .single()
+  const restaurant = await getRestaurantBySlug(restSlug)
+  const category = restaurant ? await getCategoryBySlug(restaurant.id, catSlug) as MenuCategory | null : null
 
   return {
     title: category && restaurant ? `${category.name} - ${restaurant.name} Menu` : 'Menu',

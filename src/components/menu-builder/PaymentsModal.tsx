@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Modal } from "../ui/Modal";
-import { Loader2, CreditCard, Plus, Pencil } from "lucide-react";
+import { Loader2, Plus, Pencil } from "lucide-react";
 import { Payment, Restaurant, PaymentStatus } from "@/src/types";
 import { getPaymentDisplayStatus, PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "@/src/utils/paymentStatus";
 

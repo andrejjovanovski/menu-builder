@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { createClient } from "@/src/utils/supabase/client"; // Standardized browser client
-import { Restaurant, MenuCategory, MenuItem, UserRole } from "@/src/types";
+import { Restaurant, MenuCategory, MenuItem } from "@/src/types";
 import { useAuth } from "./useAuth";
+import { apiFetch } from "@/lib/api";
 
 export function useMenuBuilder() {
-    const { userRole, user, logout } = useAuth();
-    const supabase = createClient(); // Initialize Supabase browser client
+    const { userRole, user, logout, loading: authLoading } = useAuth();
 
     const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
     const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
@@ -18,107 +17,85 @@ export function useMenuBuilder() {
     const [activeFilter, setActiveFilter] = useState<"all" | string>("all");
     const restaurantsFetchedRef = useRef(false);
 
-    // --- 1. FETCH RESTAURANTS ---
     const fetchRestaurants = useCallback(async () => {
         try {
             if (!user) {
+                setRestaurants([]);
+                setSelectedRestaurant(null);
                 setLoading(false);
                 return;
             }
 
-            // Reset fetch ref if called manually (e.g., after save)
-            // If you want to allow manual refreshes, you can remove the ref check here
-            // or pass a 'force' boolean.
-
-            let query = supabase
-                .from("restaurants")
-                .select("*")
-                .order("created_at", { ascending: false });
-
-            // RBAC: If user is not admin, only show restaurants they own
-            if (userRole !== "admin") {
-                query = query.eq("owner_id", user.id);
-            }
-
-            const { data, error } = await query;
-
-            if (error) {
-                console.error("Error fetching restaurants:", error);
-            } else {
-                setRestaurants(data || []);
-            }
+            const data = await apiFetch<Restaurant[]>("/api/restaurants");
+            setRestaurants(data || []);
         } catch (error) {
-            console.error("Unexpected error fetching restaurants:", error);
+            console.error("Error fetching restaurants:", error);
         } finally {
             setLoading(false);
         }
-    }, [user, userRole, supabase]);
+    }, [user]);
 
-    // Initial load
     useEffect(() => {
-        if (user && userRole !== null && !restaurantsFetchedRef.current) {
+        if (!authLoading && user && userRole !== null && !restaurantsFetchedRef.current) {
             restaurantsFetchedRef.current = true;
-            fetchRestaurants();
+            void fetchRestaurants();
         }
-    }, [user, userRole, fetchRestaurants]);
 
-    // --- 2. SELECT RESTAURANT & LOAD DATA ---
+        if (!authLoading && !user) {
+            setLoading(false);
+        }
+    }, [authLoading, user, userRole, fetchRestaurants]);
+
     const selectRestaurant = useCallback(async (restaurant: Restaurant) => {
         setSelectedRestaurant(restaurant);
         setSearchTerm("");
         setActiveFilter("all");
 
         try {
-            // Load Categories (Using direct Supabase call for better consistency)
-            const { data: catData, error: catError } = await supabase
-                .from("menu_categories")
-                .select("*")
-                .eq("restaurant_id", restaurant.id)
-                .order("order", { ascending: true });
+            const catData = await apiFetch<MenuCategory[]>(
+                `/api/restaurants/${restaurant.slug}/categories`
+            );
 
-            if (!catError) setCategories(catData || []);
+            setCategories(catData || []);
 
-            // Load Menu Items
-            const { data: itemData, error: itemError } = await supabase
-                .from("menu_items")
-                .select("*")
-                .eq("restaurant_id", restaurant.id)
-                .order("order", { ascending: true });
+            const itemResponses = await Promise.all(
+                (catData || []).map((category) =>
+                    apiFetch<MenuItem[]>(
+                        `/api/restaurants/${restaurant.slug}/categories/${category.slug}/items`
+                    )
+                )
+            );
 
-            if (!itemError) setItems(itemData || []);
-
+            setItems(itemResponses.flat());
         } catch (error) {
             console.error("Error loading restaurant data:", error);
         }
-    }, [supabase]);
-
-    // --- 3. ACTIONS (CRUD) ---
+    }, []);
 
     const deleteItemAction = async (id: string) => {
-        const { error } = await supabase
-            .from("menu_items")
-            .delete()
-            .eq("id", id);
-
-        if (!error) {
+        try {
+            await apiFetch<{ success: boolean }>(`/api/items/${id}`, {
+                method: "DELETE",
+            });
             setItems((prev) => prev.filter((item) => item.id !== id));
             return { success: true };
+        } catch (error) {
+            return { success: false, error };
         }
-        return { success: false, error };
     };
 
     const deleteCategoryAction = async (id: string) => {
-        const { error } = await supabase
-            .from("menu_categories")
-            .delete()
-            .eq("id", id);
-
-        if (!error) {
+        try {
+            await apiFetch<{ success: boolean }>(`/api/categories/${id}`, {
+                method: "DELETE",
+            });
             setCategories((prev) => prev.filter((c) => c.id !== id));
+            setItems((prev) => prev.filter((item) => item.category_id !== id));
             if (activeFilter === id) setActiveFilter("all");
             return { success: true };
+        } catch (error) {
+            return { success: false, error };
         }
-        return { success: false, error };
     };
 
     const moveItem = (index: number, direction: "up" | "down") => {
@@ -128,10 +105,8 @@ export function useMenuBuilder() {
 
         [newItems[index], newItems[targetIndex]] = [newItems[targetIndex], newItems[index]];
         setItems(newItems);
-        // Note: You should eventually add a Supabase .update() call here to persist the order
     };
 
-    // --- 4. MEMOIZED FILTERING ---
     const filteredItems = useMemo(() => {
         return items.filter((item) => {
             const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -159,6 +134,7 @@ export function useMenuBuilder() {
         setItems,
         setCategories,
         userRole,
+        user,
         logout,
     };
 }

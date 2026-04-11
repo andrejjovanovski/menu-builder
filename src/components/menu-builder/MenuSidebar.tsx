@@ -1,12 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { UtensilsCrossed, LogOut, Menu, X, CreditCard } from "lucide-react";
+import Link from "next/link";
+import { LucideIcon, UtensilsCrossed, LogOut, Menu, X } from "lucide-react";
 import { Restaurant } from "@/src/types";
 import { CreateRestaurantForm } from "../forms/CreateRestaurantForm";
 import { UserRole } from "@/src/types";
 import type { PaymentStatusDisplay } from "@/src/types";
 import { PAYMENT_STATUS_COLORS, PAYMENT_STATUS_LABELS } from "@/src/utils/paymentStatus";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/src/components/ui/badge";
+import { Button } from "@/src/components/ui/button";
+import { Separator } from "@/src/components/ui/separator";
+
+interface NavigationItem {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+}
 
 interface Props {
   restaurants: Restaurant[];
@@ -16,7 +27,8 @@ interface Props {
   onLogout: () => void;
   userRole: UserRole;
   paymentStatusByRestaurantId?: Record<string, PaymentStatusDisplay>;
-  onOpenPayments?: () => void;
+  navigationItems: NavigationItem[];
+  currentPath: string;
 }
 
 export function MenuSidebar({
@@ -27,7 +39,8 @@ export function MenuSidebar({
   onLogout,
   userRole,
   paymentStatusByRestaurantId = {},
-  onOpenPayments,
+  navigationItems,
+  currentPath,
 }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -36,43 +49,44 @@ export function MenuSidebar({
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 hover:bg-slate-100 rounded-lg transition-colors"
+        className="fixed left-4 top-4 z-50 rounded-lg border border-border bg-background p-2 shadow-sm transition-colors hover:bg-accent md:hidden"
         aria-label="Toggle menu"
       >
         {!isOpen && (
-          <Menu className="w-6 h-6 text-slate-600" />
+          <Menu className="h-6 w-6 text-foreground" />
         )}
       </button>
 
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-30"
+          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <aside className={`w-72 bg-white border-r border-slate-200 flex flex-col fixed md:relative top-0 h-screen overflow-hidden transition-transform duration-300 z-40 ${
+      <aside className={`fixed top-0 z-40 flex h-screen w-80 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-300 md:relative ${
         isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
       }`}>
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="bg-indigo-600 p-2 rounded-lg text-white">
-                <UtensilsCrossed className="w-5 h-5" />
+        <div className="border-b border-sidebar-border p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-sidebar-primary p-2 text-sidebar-primary-foreground shadow-sm">
+                <UtensilsCrossed className="h-5 w-5" />
               </div>
-              <h2 className="text-xl font-bold text-slate-800 tracking-tight">
-                Menu Studio
-              </h2>
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">Menu Studio</h2>
+                <p className="text-xs text-muted-foreground">Restaurant workspace</p>
+              </div>
             </div>
             {/* Close button for mobile */}
             <button
               onClick={() => setIsOpen(false)}
-              className="md:hidden p-1 hover:bg-slate-100 rounded-lg transition-colors flex-shrink-0"
+              className="flex-shrink-0 rounded-lg p-1 transition-colors hover:bg-sidebar-accent md:hidden"
               aria-label="Close menu"
             >
-              <X className="w-5 h-5 text-slate-600" />
+              <X className="h-5 w-5 text-sidebar-foreground" />
             </button>
           </div>
 
@@ -82,63 +96,88 @@ export function MenuSidebar({
         </div>
 
         {/* Middle Section: Scrollable Nav */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          <div className="flex items-center justify-between px-3 mb-2">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        <nav className="flex-1 space-y-6 overflow-y-auto p-4">
+          <div>
+            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               {userRole === "admin" ? "All" : "My"} Restaurants
             </p>
-            {userRole === "admin" && onOpenPayments && (
-              <button
-                type="button"
-                onClick={onOpenPayments}
-                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                aria-label="Manage payments"
-              >
-                <CreditCard className="w-4 h-4" />
-              </button>
-            )}
+            <div className="space-y-1">
+              {restaurants.map((r) => {
+                const paymentStatus = paymentStatusByRestaurantId[r.id];
+                const active = selectedId === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => {
+                      onSelect(r);
+                      setIsOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm transition-all",
+                      active
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+                        : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      {userRole === "admin" && paymentStatus != null && (
+                        <span
+                          className={`h-2.5 w-2.5 rounded-full shrink-0 ${PAYMENT_STATUS_COLORS[paymentStatus]}`}
+                          title={PAYMENT_STATUS_LABELS[paymentStatus]}
+                        />
+                      )}
+                      <span className="truncate font-medium">{r.name}</span>
+                    </span>
+                    {active && <Badge variant="secondary">Open</Badge>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          {restaurants.map((r) => {
-            const paymentStatus = paymentStatusByRestaurantId[r.id];
-            return (
-              <button
-                key={r.id}
-                onClick={() => {
-                  onSelect(r);
-                  setIsOpen(false);
-                }}
-                className={`w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl transition-all ${
-                  selectedId === r.id
-                    ? "bg-indigo-50 text-indigo-700 font-bold"
-                    : "text-slate-500 hover:bg-slate-50"
-                }`}
-              >
-                <span className="flex items-center gap-2 min-w-0">
-                  {userRole === "admin" && paymentStatus != null && (
-                    <span
-                      className={`w-2.5 h-2.5 rounded-full shrink-0 ${PAYMENT_STATUS_COLORS[paymentStatus]}`}
-                      title={PAYMENT_STATUS_LABELS[paymentStatus]}
-                    />
-                  )}
-                  <span className="truncate">{r.name}</span>
-                </span>
-                {selectedId === r.id && (
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0" />
-                )}
-              </button>
-            );
-          })}
+
+          {selectedId && (
+            <div>
+              <Separator className="mb-6" />
+              <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Workspace
+              </p>
+              <div className="space-y-1">
+                {navigationItems.map((item) => {
+                  const active = currentPath === item.href;
+                  const Icon = item.icon;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setIsOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                        active
+                          ? "bg-card text-card-foreground shadow-sm"
+                          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Bottom Section: Logout Button */}
-        <div className="p-4 border-t border-slate-100">
-          <button
+        <div className="border-t border-sidebar-border p-4">
+          <Button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 font-bold rounded-xl hover:bg-red-50 hover:text-red-600 transition-all group"
+            variant="ghost"
+            className="w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           >
-            <LogOut className="w-5 h-5 transition-colors group-hover:text-red-600" />
+            <LogOut className="h-5 w-5" />
             <span>Logout</span>
-          </button>
+          </Button>
         </div>
       </aside>
     </>

@@ -1,0 +1,43 @@
+import { query } from "@/lib/db";
+
+export async function getRestaurantBySlug(slug: string) {
+  const result = await query(
+    "select * from restaurants where slug = $1 limit 1",
+    [slug]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function getRestaurantById(id: string) {
+  const result = await query("select * from restaurants where id = $1 limit 1", [id]);
+  return result.rows[0] ?? null;
+}
+
+export async function getRestaurantCategories(restaurantId: string) {
+  const result = await query(
+    'select * from menu_categories where restaurant_id = $1 order by "order" asc, created_at asc',
+    [restaurantId]
+  );
+  return result.rows;
+}
+
+export async function getRestaurantItems(restaurantId: string) {
+  const result = await query(
+    'select * from menu_items where restaurant_id = $1 order by "order" asc, created_at asc',
+    [restaurantId]
+  );
+  return result.rows;
+}
+
+export async function getCategoryBySlug(restaurantId: string, slug: string) {
+  const result = await query(
+    "select * from menu_categories where restaurant_id = $1 and slug = $2 limit 1",
+    [restaurantId, slug]
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function getItemById(id: string) {
+  const result = await query("select * from menu_items where id = $1 limit 1", [id]);
+  return result.rows[0] ?? null;
+}

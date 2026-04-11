@@ -4,6 +4,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { MenuItem } from "@/src/types";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { toTagLabel } from "@/src/utils/menuTags";
 
 interface Props {
     item: MenuItem;
@@ -104,6 +105,18 @@ export function ItemCard({ item, categoryName, onDelete, onEdit, index }: Props)
             </span>
                     </div>
                     <p className="text-slate-500 text-sm line-clamp-1">{item.description}</p>
+                    {!!item.dietary_tags?.length && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {item.dietary_tags.slice(0, 3).map((tag) => (
+                                <span
+                                    key={tag}
+                                    className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"
+                                >
+                                    {toTagLabel(tag, "dietary")}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Pricing & Hidden Actions (Revealed on Hover) */}

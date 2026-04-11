@@ -1,67 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { CreatePaymentInput } from '@/src/types'
+import { randomUUID } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db";
+import { requireAdminSession } from "@/lib/server-auth";
 
-async function requireAdmin(request: NextRequest) {
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll() {},
-      },
-    }
-  )
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  if (userError || !user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }), supabase: null }
+export async function GET() {
+  const { error } = await requireAdminSession();
+  if (error) {
+    return error;
+  }
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return { error: NextResponse.json({ error: 'Forbidden' }, { status: 403 }), supabase: null }
-
-  return { error: null, supabase }
-}
-
-export async function GET(request: NextRequest) {
-  const { error, supabase } = await requireAdmin(request)
-  if (error) return error
-  if (!supabase) return NextResponse.json({ error: 'Server error' }, { status: 500 })
-
-  const { data, err } = await supabase
-    .from('payments')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (err) return NextResponse.json({ error: err.message }, { status: 500 })
-  return NextResponse.json(data || [])
+  const result = await query("select * from payments order by created_at desc");
+  return NextResponse.json(result.rows);
 }
 
 export async function POST(request: NextRequest) {
-  const { error, supabase } = await requireAdmin(request)
-  if (error) return error
-  if (!supabase) return NextResponse.json({ error: 'Server error' }, { status: 500 })
-
-  try {
-    const body: CreatePaymentInput = await request.json()
-    const { restaurant_id, expiration_date, notes, status } = body
-    if (!restaurant_id || !expiration_date) {
-      return NextResponse.json({ error: 'restaurant_id and expiration_date are required' }, { status: 400 })
-    }
-
-    const { data, error: insertError } = await supabase
-      .from('payments')
-      .insert({
-        restaurant_id,
-        expiration_date,
-        notes: notes ?? null,
-        status: status ?? 'active',
-      })
-      .select()
-      .single()
-
-    if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
-    return NextResponse.json(data, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  const { error } = await requireAdminSession();
+  if (error) {
+    return error;
   }
+
+  const body = await request.json();
+  if (!body.restaurant_id || !body.expiration_date) {
+    return NextResponse.json(
+      { error: "restaurant_id and expiration_date are required" },
+      { status: 400 }
+    );
+  }
+
+  const result = await query(
+    `insert into payments (id, restaurant_id, expiration_date, notes, status)
+     values ($1, $2, $3, $4, $5)
+     returning *`,
+    [
+      randomUUID(),
+      body.restaurant_id,
+      body.expiration_date,
+      body.notes ?? null,
+      body.status ?? "active",
+    ]
+  );
+
+  return NextResponse.json(result.rows[0], { status: 201 });
 }

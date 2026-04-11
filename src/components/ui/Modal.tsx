@@ -28,28 +28,28 @@ export function Modal({ isOpen, onClose, title, description, children }: ModalPr
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* 1. High Contrast Backdrop */}
             <div
-                className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300"
+                className="absolute inset-0 bg-background/80 backdrop-blur-md animate-in fade-in duration-300"
                 onClick={onClose}
             />
 
             {/* 2. Modal Container */}
-            <div className="relative bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="relative w-full max-w-xl overflow-hidden rounded-[40px] border border-border bg-card text-card-foreground shadow-2xl animate-in zoom-in-95 duration-200">
 
                 {/* Header Section */}
                 <div className="p-8 pb-0 flex justify-between items-start">
                     <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                        <h3 className="text-2xl font-black tracking-tight">
                             {title}
                         </h3>
                         {description && (
-                            <p className="text-slate-600 text-sm font-medium mt-1">
+                            <p className="mt-1 text-sm font-medium text-muted-foreground">
                                 {description}
                             </p>
                         )}
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                        className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                     >
                         <X className="w-6 h-6" />
                     </button>

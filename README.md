@@ -1,232 +1,328 @@
-# Restaurant Menu Builder
+# MenuCup
 
-A production-ready multi-tenant restaurant menu web application built with Next.js 14+, TypeScript, Tailwind CSS, and Supabase.
+MenuCup is a multilingual restaurant menu platform built with Next.js, React, TypeScript, Tailwind CSS, PostgreSQL, Better Auth, and S3-compatible storage. It combines a public-facing digital menu, an authenticated menu-builder dashboard, restaurant onboarding, and admin payment tracking in one app.
 
-## Features
+## What the app includes
 
-- **Public Menu Display**: SEO-friendly dynamic routes for restaurant menus
-- **Menu Builder Dashboard**: Authenticated admin interface for managing restaurants, categories, and items
-- **Multi-tenant**: Each restaurant has its own slug-based URL
-- **Responsive Design**: Mobile-first UI with Tailwind CSS
-- **Image Upload**: Supabase Storage integration for menu item images
-- **Drag & Drop Ordering**: Reorder categories and items
-- **Row Level Security**: Secure data access with Supabase RLS policies
+- Public restaurant menu pages at `/{restaurantSlug}`
+- Optional category pages at `/{restaurantSlug}/{categorySlug}`
+- Owner authentication with Better Auth
+- Multi-step restaurant onboarding after signup
+- Menu builder dashboard for restaurants, categories, and items
+- Restaurant branding controls for colors, logo, background image, and social links
+- QR code generation and sharing tools
+- Admin-only payment management with derived statuses like `expires_soon`
+- English and Macedonian localization with `next-intl`
+- Landing page contact form powered by Resend
 
-## Tech Stack
+## Tech stack
 
-- **Frontend**: Next.js 14+ (App Router), TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Supabase (PostgreSQL, Auth, Storage)
-- **Deployment**: Vercel
-- **Database**: Supabase PostgreSQL with RLS policies
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Framer Motion
+- PostgreSQL
+- Better Auth
+- S3-compatible object storage
+- `next-intl` for localization
+- Resend for lead emails
 
-## Themes
+## Main routes
 
-| Name     | --background | --acent | --card  |
-|----------|--------------|---------|---------|
-| Amber    | #161412      | #E19638 | #211E1B |
-| Emerald  | #0D1111      | #2DBF8D | #171C1C |
-| Rose     | #141019      | #F04D95 | #131A21 |
-| Midnight | #0B0E13      | #42B0F0 | #131A21 |
-| Crimson  | #100F0F      | #E11B1B | #1B1919 |
+- `/` marketing landing page
+- `/login` sign in
+- `/register` sign up
+- `/onboarding` create the first restaurant after signup
+- `/dashboard/menu-builder` authenticated menu management
+- `/{restaurant}` public restaurant menu
+- `/{restaurant}/{category}` category-specific menu page
 
-## Getting Started
+## API routes
 
-### Prerequisites
+- `GET /api/restaurants` list restaurants for the signed-in owner
+- `POST /api/restaurants` create a restaurant during onboarding or admin flow
+- `GET /api/restaurants/[slug]` fetch one restaurant by slug
+- `GET /api/restaurants/[slug]/categories` list categories for a restaurant
+- `POST /api/restaurants/[slug]/categories` create a category for an owned restaurant
+- `GET /api/restaurants/[slug]/categories/[categorySlug]/items` list items for a category
+- `POST /api/restaurants/[slug]/categories/[categorySlug]/items` create an item for a category
+- `GET /api/payments` admin-only payment list
+- `POST /api/payments` admin-only payment creation
+- `PATCH /api/payments/[id]` admin-only payment update
 
-- Node.js 18+
-- npm or yarn
-- Supabase account
+## Environment variables
 
-### Installation
+Create `.env.local` with:
 
-1. Clone the repository:
-
-```bash
-git clone <repository-url>
-cd restaurant-menu-builder
+```env
+DATABASE_URL=postgres://user:password@localhost:5432/menucup
+DATABASE_SSL=disable
+BETTER_AUTH_SECRET=replace-with-a-long-random-string
+BETTER_AUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+S3_REGION=auto
+S3_BUCKET=menucup
+S3_ACCESS_KEY_ID=your-access-key
+S3_SECRET_ACCESS_KEY=your-secret-key
+S3_ENDPOINT=https://your-s3-endpoint.example.com
+S3_PUBLIC_URL_BASE=https://cdn.example.com/menucup
+S3_FORCE_PATH_STYLE=false
+RESEND_API_KEY=your-resend-api-key
+SEND_EMAILS_TO=your-inbox@example.com
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_RECOMMENDATION_MODEL=gpt-5.2
 ```
 
-2. Install dependencies:
+Notes:
+
+- `DATABASE_URL` is the primary Postgres connection used by app routes and Better Auth.
+- `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` are required for session handling.
+- `NEXT_PUBLIC_APP_URL` is used by the browser auth client.
+- `S3_*` variables configure logo, background, QR code, and menu image uploads.
+- `RESEND_API_KEY` and `SEND_EMAILS_TO` are required for the landing page contact form.
+- `OPENAI_API_KEY` enables the AI recommendation assistant on the public menu.
+- `OPENAI_RECOMMENDATION_MODEL` lets you swap the model without code changes.
+
+## Local development
 
 ```bash
 npm install
-```
-
-3. Set up Supabase:
-
-   - Create a new Supabase project
-   - Run the SQL schema (see below) in your Supabase SQL editor
-   - Get your project URL and API keys from Settings > API
-
-4. Create a `.env.local` file:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
-
-5. Run the development server:
-
-```bash
+cp .env.example oldenv.md
+docker compose up -d
+npm run db:setup
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the app.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Database Schema
+Local services from `docker-compose.yml`:
 
-Run this SQL in your Supabase SQL editor:
+- PostgreSQL: `localhost:5432`
+- MinIO API: `http://localhost:9000`
+- MinIO console: `http://localhost:9001`
+- MinIO login: `menucup` / `menucup123`
+
+Useful scripts:
+
+- `npm run dev`
+- `npm run build`
+- `npm run start`
+- `npm run lint`
+- `npm run db:migrate:auth`
+- `npm run db:migrate:app`
+- `npm run db:setup`
+
+## Database setup
+
+The repository now ships the domain schema in [database/schema.sql](/Users/andrej/Documents/menuCup/database/schema.sql). That file creates:
+
+- `profiles`
+- `restaurants`
+- `menu_categories`
+- `menu_items`
+- `payments`
+
+Run Better Auth migrations for its auth tables first, then apply `database/schema.sql`.
+The repo now includes helper scripts for that:
+
+```bash
+npm run db:migrate:auth
+npm run db:migrate:app
+```
+
+Or both at once:
+
+```bash
+npm run db:setup
+```
+
+### Create an admin user
+
+Use the helper script:
+
+```bash
+npm run admin:create -- admin@example.com StrongPassword123 "MenuCup Admin"
+```
+
+If the user does not exist yet, this creates them first.
+If they already exist, it upgrades their `profiles.role` to `admin`.
+
+The app also expects an S3-compatible bucket for:
+
+- `restaurant-assets` for logos and restaurant backgrounds
+- `menu-items` for item images
+
+The included Docker setup creates a local `menucup` bucket in MinIO automatically.
+
+### App schema
 
 ```sql
--- Create tables
-CREATE TABLE restaurants (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL UNIQUE,
-  owner_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+create table if not exists profiles (
+  id text primary key references "user"(id) on delete cascade,
+  role text not null default 'owner' check (role in ('admin', 'owner')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
-CREATE TABLE menu_categories (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL,
-  "order" INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(restaurant_id, slug)
+create table if not exists restaurants (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text not null unique,
+  subtitle text,
+  description text,
+  owner_id text not null references "user"(id) on delete cascade,
+  qr_code_url text,
+  logo_url text,
+  est_year text,
+  appearance text default 'minimal' check (appearance in ('minimal', 'visual')),
+  background_color text,
+  accent_color text,
+  card_bg_color text,
+  background_image_url text,
+  slogan text,
+  text_color text,
+  muted_text_color text,
+  footer_quote text,
+  open_hours text,
+  facebook_url text,
+  instagram_url text,
+  tiktok_url text,
+  phone text,
+  open_bottom_sheet_on_click boolean default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
-CREATE TABLE menu_items (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  category_id UUID NOT NULL REFERENCES menu_categories(id) ON DELETE CASCADE,
-  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  description TEXT,
-  price DECIMAL(10,2) NOT NULL,
-  image_url TEXT,
-  is_available BOOLEAN NOT NULL DEFAULT true,
-  "order" INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+create table if not exists menu_categories (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants(id) on delete cascade,
+  name text not null,
+  slug text not null,
+  "order" integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (restaurant_id, slug)
 );
 
--- Payments (admin-managed; requires profiles.role = 'admin')
-CREATE TABLE payments (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  restaurant_id UUID NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
-  expiration_date DATE NOT NULL,
-  notes TEXT,
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'expired', 'canceled')),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+create table if not exists menu_items (
+  id uuid primary key default gen_random_uuid(),
+  category_id uuid not null references menu_categories(id) on delete cascade,
+  restaurant_id uuid not null references restaurants(id) on delete cascade,
+  name text not null,
+  description text,
+  price numeric(10,2) not null,
+  image_url text,
+  is_available boolean not null default true,
+  "order" integer not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
--- Create indexes
-CREATE INDEX idx_restaurants_slug ON restaurants(slug);
-CREATE INDEX idx_menu_categories_restaurant_id ON menu_categories(restaurant_id);
-CREATE INDEX idx_menu_categories_slug ON menu_categories(slug);
-CREATE INDEX idx_menu_items_category_id ON menu_items(category_id);
-CREATE INDEX idx_menu_items_restaurant_id ON menu_items(restaurant_id);
-CREATE INDEX idx_payments_restaurant_id ON payments(restaurant_id);
-
--- Enable RLS
-ALTER TABLE restaurants ENABLE ROW LEVEL SECURITY;
-ALTER TABLE menu_categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Public read restaurants" ON restaurants FOR SELECT USING (true);
-CREATE POLICY "Owners manage restaurants" ON restaurants FOR ALL USING (auth.uid() = owner_id);
-
-CREATE POLICY "Public read menu_categories" ON menu_categories FOR SELECT USING (true);
-CREATE POLICY "Owners manage menu_categories" ON menu_categories FOR ALL USING (
-  EXISTS (SELECT 1 FROM restaurants WHERE id = menu_categories.restaurant_id AND owner_id = auth.uid())
+create table if not exists payments (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references restaurants(id) on delete cascade,
+  expiration_date date not null,
+  notes text,
+  status text not null default 'active' check (status in ('active', 'expired', 'canceled')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
-CREATE POLICY "Public read menu_items" ON menu_items FOR SELECT USING (true);
-CREATE POLICY "Owners manage menu_items" ON menu_items FOR ALL USING (
-  EXISTS (SELECT 1 FROM restaurants WHERE id = menu_items.restaurant_id AND owner_id = auth.uid())
-);
-
--- Payments: only admins (profiles.role = 'admin') can read/write
-CREATE POLICY "Admins manage payments" ON payments FOR ALL USING (
-  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-);
+create index if not exists idx_restaurants_slug on restaurants(slug);
+create index if not exists idx_menu_categories_restaurant_id on menu_categories(restaurant_id);
+create index if not exists idx_menu_items_restaurant_id on menu_items(restaurant_id);
+create index if not exists idx_payments_restaurant_id on payments(restaurant_id);
 ```
 
-## Project Structure
+The backend now uses application-level authorization and S3-compatible storage instead of Supabase RLS and Supabase buckets.
 
-```
+### Authorization model
+
+Authorization is now enforced in application code instead of database RLS:
+
+- public users can read restaurant and menu data
+- owners can manage only restaurants they own
+- admins can manage payments and cross-restaurant dashboard actions
+
+## Localization
+
+The app currently supports:
+
+- `en`
+- `mk`
+
+Locale selection is stored in the `NEXT_LOCALE` cookie and passed through middleware to `next-intl`.
+
+## Project structure
+
+```text
 app/
-├── [restaurant]/
-│   ├── page.tsx              # Restaurant menu overview
-│   └── [category]/
-│       └── page.tsx          # Category items
-├── dashboard/
-│   └── menu-builder/
-│       └── page.tsx          # Admin dashboard
-├── api/
-│   └── restaurants/
-│       ├── route.ts          # CRUD restaurants
-│       └── [slug]/
-│           ├── route.ts      # Get restaurant by slug
-│           └── categories/
-│               ├── route.ts  # CRUD categories
-│               └── [categorySlug]/
-│                   └── items/
-│                       └── route.ts  # CRUD items
-├── login/
-│   └── page.tsx              # Authentication
+  actions/
+    contact.ts
+  api/
+    payments/
+    restaurants/
+  dashboard/menu-builder/
+  login/
+  onboarding/
+  register/
+  [restaurant]/
+    page.tsx
+    [category]/page.tsx
+
+hooks/
+  useAuth.ts
+  useMenuBuilder.ts
+
 lib/
-├── supabase.ts              # Supabase clients
-types/
-├── index.ts                 # TypeScript types
-utils/
-├── slug.ts                  # Slug generation utility
+  auth.ts
+  auth-client.ts
+  db.ts
+  storage.ts
+
+messages/
+  en.json
+  mk.json
+
+src/
+  components/
+    forms/
+    menu-builder/
+    public-menu/
+    ui/
+  types/
+  utils/
 ```
 
-## API Routes
+## Product notes
 
-- `GET/POST /api/restaurants` - List/Create restaurants (authenticated)
-- `GET /api/restaurants/[slug]` - Get restaurant by slug
-- `GET/POST /api/restaurants/[slug]/categories` - List/Create categories
-- `GET/POST /api/restaurants/[slug]/categories/[categorySlug]/items` - List/Create items
+- The public menu supports restaurant-level theming and social/contact actions.
+- The public menu now includes an AI recommendation assistant that answers using the current restaurant menu only.
+- The dashboard distinguishes between `owner` and `admin` roles.
+- Payment status in the UI derives `expires_soon` when expiration is within 30 days.
+- The onboarding flow writes the restaurant first, then uploads the optional logo through the app upload API.
+- Remote images are configured from `S3_PUBLIC_URL_BASE` or `S3_ENDPOINT` in `next.config.ts`.
 
 ## Deployment
 
-### Vercel
+This app is set up well for Vercel:
 
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy
+1. Import the repository into Vercel.
+2. Add the same environment variables from `.env.local`.
+3. Point `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` at your deployed domain.
+4. Provision PostgreSQL plus S3-compatible storage before the first deploy.
 
-### Environment Variables
+## First local run
 
-Required environment variables:
+From a clean clone, the shortest working path is:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+```bash
+npm install
+cp .env.example oldenv.md
+docker compose up -d
+npm run db:setup
+npm run dev
+```
 
-## Development
-
-- Use `npm run dev` for development
-- Use `npm run build` for production build
-- Use `npm run lint` for linting
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## License
-
-MIT License
+If you prefer SQL, you can still update `profiles.role` manually, but the script above is the easiest path.

@@ -159,6 +159,9 @@ export function RestaurantSettingsModal({
       footerQuote: "",
       openHours: "",
       openBottomSheetOnClick: true,
+      recommendationAiEnabled: true,
+      menuFiltersEnabled: true,
+      feedbackEnabled: true,
       facebookUrl: "",
       instagramUrl: "",
       tiktokUrl: "",
@@ -351,6 +354,96 @@ export function RestaurantSettingsModal({
                       <span
                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
                           settings.openBottomSheetOnClick ? "translate-x-5" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">
+                        Enable AI recommendations
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Show the ask-for-a-recommendation assistant on the public menu.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.recommendationAiEnabled}
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          recommendationAiEnabled: !settings.recommendationAiEnabled,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                        settings.recommendationAiEnabled ? "bg-indigo-600" : "bg-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
+                          settings.recommendationAiEnabled ? "translate-x-5" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">
+                        Enable menu filters
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Show dietary and allergen filters on the public menu.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.menuFiltersEnabled}
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          menuFiltersEnabled: !settings.menuFiltersEnabled,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                        settings.menuFiltersEnabled ? "bg-indigo-600" : "bg-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
+                          settings.menuFiltersEnabled ? "translate-x-5" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">
+                        Enable quick feedback
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Show one-tap feedback after guests browse the menu.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.feedbackEnabled}
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          feedbackEnabled: !settings.feedbackEnabled,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                        settings.feedbackEnabled ? "bg-indigo-600" : "bg-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
+                          settings.feedbackEnabled ? "translate-x-5" : "translate-x-0.5"
                         }`}
                       />
                     </button>

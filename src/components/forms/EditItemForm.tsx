@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { DollarSign, Save, Loader2, ImagePlus, X } from 'lucide-react'
 import { Restaurant, MenuCategory, MenuItem } from '@/src/types'
-import { supabaseClient } from '@/lib/supabase'
-import Image from "next/image";
+import { uploadAsset } from '@/src/utils/uploads'
+import { ALLERGEN_TAGS, DIETARY_TAGS } from '@/src/utils/menuTags'
 
 interface EditItemFormProps {
     item: MenuItem
@@ -21,7 +21,9 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
         description: item.description || '',
         price: item.price.toString(),
         category_id: item.category_id,
-        is_available: item.is_available
+        is_available: item.is_available,
+        dietary_tags: item.dietary_tags || [],
+        allergen_tags: item.allergen_tags || [],
     })
 
     // Image Upload State
@@ -42,24 +44,6 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
         setImagePreview(null)
     }
 
-    const uploadImage = async (file: File) => {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random()}.${fileExt}`
-        const filePath = `${selectedRestaurant.id}/${fileName}`
-
-        const { error: uploadError } = await supabaseClient.storage
-            .from('menu-items')
-            .upload(filePath, file)
-
-        if (uploadError) throw uploadError
-
-        const { data } = supabaseClient.storage
-            .from('menu-items')
-            .getPublicUrl(filePath)
-
-        return data.publicUrl
-    }
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
@@ -70,29 +54,31 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
             
             // Handle image upload
             if (imageFile) {
-                image_url = await uploadImage(imageFile)
+                image_url = await uploadAsset(imageFile, `menu-items/${selectedRestaurant.id}`)
             } else if (imagePreview === null && item.image_url) {
                 // Image was removed
                 image_url = ''
             }
 
-            const { data, error } = await supabaseClient
-                .from('menu_items')
-                .update({
+            const response = await fetch(`/api/items/${item.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
                     name: formData.name,
                     description: formData.description,
                     price: parseFloat(formData.price),
                     category_id: formData.category_id,
                     is_available: formData.is_available,
                     image_url: image_url || null,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', item.id)
-                .select()
-                .single()
+                    dietary_tags: formData.dietary_tags,
+                    allergen_tags: formData.allergen_tags,
+                }),
+            })
 
-            if (error) throw error
-            if (data) onUpdate(data)
+            if (!response.ok) throw new Error('Failed to update item')
+
+            const data = await response.json()
+            onUpdate(data)
         } catch (error) {
             console.error('Error updating item:', error)
             alert('Failed to update item')
@@ -111,7 +97,7 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
                     <div className="relative group">
                         {imagePreview ? (
                             <div className="relative h-40 w-full rounded-2xl overflow-hidden border border-slate-200">
-                                <Image src={imagePreview} alt="Preview" fill className="object-cover" />
+                                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                                 <button
                                     type="button"
                                     onClick={handleRemoveImage}
@@ -189,6 +175,34 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
                     />
                 </div>
 
+                <TagSelector
+                    title="Dietary Tags"
+                    options={DIETARY_TAGS}
+                    selected={formData.dietary_tags}
+                    onToggle={(value) =>
+                        setFormData({
+                            ...formData,
+                            dietary_tags: formData.dietary_tags.includes(value)
+                                ? formData.dietary_tags.filter((tag) => tag !== value)
+                                : [...formData.dietary_tags, value],
+                        })
+                    }
+                />
+
+                <TagSelector
+                    title="Allergens"
+                    options={ALLERGEN_TAGS}
+                    selected={formData.allergen_tags}
+                    onToggle={(value) =>
+                        setFormData({
+                            ...formData,
+                            allergen_tags: formData.allergen_tags.includes(value)
+                                ? formData.allergen_tags.filter((tag) => tag !== value)
+                                : [...formData.allergen_tags, value],
+                        })
+                    }
+                />
+
                 {/* Availability Toggle */}
                 <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
                     <span className="font-bold text-slate-700">Available for customers</span>
@@ -219,5 +233,42 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
                 </button>
             </div>
         </form>
+    )
+}
+
+function TagSelector({
+    title,
+    options,
+    selected,
+    onToggle,
+}: {
+    title: string
+    options: ReadonlyArray<{ value: string; label: string }>
+    selected: string[]
+    onToggle: (value: string) => void
+}) {
+    return (
+        <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">{title}</label>
+            <div className="flex flex-wrap gap-2">
+                {options.map((option) => {
+                    const active = selected.includes(option.value)
+                    return (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => onToggle(option.value)}
+                            className={`px-3 py-2 rounded-full text-xs font-bold border transition-all ${
+                                active
+                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                            }`}
+                        >
+                            {option.label}
+                        </button>
+                    )
+                })}
+            </div>
+        </div>
     )
 }
