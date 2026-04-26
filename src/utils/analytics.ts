@@ -19,7 +19,7 @@ export function getAnalyticsSessionId() {
 
 export async function trackRestaurantEvent(params: {
   restaurantSlug: string;
-  eventType: "menu_view" | "item_open" | "recommendation_request";
+  eventType: "menu_view" | "item_open" | "recommendation_request" | "upsell_impression" | "upsell_tap";
   itemId?: string;
   metadata?: Record<string, unknown>;
 }) {

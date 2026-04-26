@@ -54,6 +54,7 @@ export default function MenuBuilderPage() {
           categories={categories}
           editingItem={editingItem}
           filteredItems={filteredItems}
+          items={items}
           isCatModalOpen={isCatModalOpen}
           isDeleting={isDeleting}
           isItemModalOpen={isItemModalOpen}
@@ -85,6 +86,7 @@ function MenuBuilderContent({
   categories,
   editingItem,
   filteredItems,
+  items,
   isCatModalOpen,
   isDeleting,
   isItemModalOpen,
@@ -110,6 +112,7 @@ function MenuBuilderContent({
   categories: MenuCategory[];
   editingItem: MenuItem | null;
   filteredItems: MenuItem[];
+  items: MenuItem[];
   isCatModalOpen: boolean;
   isDeleting: boolean;
   isItemModalOpen: boolean;
@@ -400,6 +403,7 @@ function MenuBuilderContent({
         <EditItemModal
           item={editingItem}
           categories={categories}
+          restaurantItems={items}
           selectedRestaurant={selectedRestaurant}
           onClose={() => setEditingItem(null)}
           onUpdated={(updatedItem) => {

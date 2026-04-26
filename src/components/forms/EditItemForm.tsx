@@ -1,20 +1,21 @@
 'use client'
 
-import { useState } from 'react'
-import { DollarSign, Save, Loader2, ImagePlus, X } from 'lucide-react'
-import { Restaurant, MenuCategory, MenuItem } from '@/src/types'
+import { useEffect, useRef, useState } from 'react'
+import { DollarSign, Save, Loader2, ImagePlus, Link2, Plus, Search, X } from 'lucide-react'
+import { Restaurant, MenuCategory, MenuItem, UpsellItem } from '@/src/types'
 import { uploadAsset } from '@/src/utils/uploads'
 import { ALLERGEN_TAGS, DIETARY_TAGS } from '@/src/utils/menuTags'
 
 interface EditItemFormProps {
     item: MenuItem
     categories: MenuCategory[]
+    restaurantItems: MenuItem[]
     selectedRestaurant: Restaurant
     onUpdate: (updatedItem: MenuItem) => void
     onCancel: () => void
 }
 
-export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, onCancel }: EditItemFormProps) {
+export function EditItemForm({ item, categories, restaurantItems, selectedRestaurant, onUpdate, onCancel }: EditItemFormProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         name: item.name,
@@ -22,6 +23,8 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
         price: item.price.toString(),
         category_id: item.category_id,
         is_available: item.is_available,
+        is_best_seller: item.is_best_seller ?? false,
+        is_new: item.is_new ?? false,
         dietary_tags: item.dietary_tags || [],
         allergen_tags: item.allergen_tags || [],
     })
@@ -30,6 +33,98 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string | null>(item.image_url || null)
     const [isUploading, setIsUploading] = useState(false)
+
+    // Upsell state
+    const [upsells, setUpsells] = useState<UpsellItem[]>([])
+    const [upsellSearch, setUpsellSearch] = useState('')
+    const [upsellDropdownOpen, setUpsellDropdownOpen] = useState(false)
+    const [upsellLoading, setUpsellLoading] = useState(false)
+    const searchRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        async function loadUpsells() {
+            try {
+                const res = await fetch(
+                    `/api/restaurants/${selectedRestaurant.slug}/items/${item.id}/upsells`
+                )
+                if (!res.ok) return
+                const data: UpsellItem[] = await res.json()
+                // Only show manual upsells in the editor
+                setUpsells(data.filter((u) => u.source === 'manual'))
+            } catch {
+                // ignore
+            }
+        }
+        void loadUpsells()
+    }, [item.id, selectedRestaurant.slug])
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+                setUpsellDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const upsellIds = new Set(upsells.map((u) => u.id))
+    const filteredItems = restaurantItems.filter(
+        (i) =>
+            i.id !== item.id &&
+            !upsellIds.has(i.id) &&
+            i.name.toLowerCase().includes(upsellSearch.toLowerCase())
+    )
+
+    const handleAddUpsell = async (candidate: MenuItem) => {
+        if (upsells.length >= 3) return
+        setUpsellLoading(true)
+        setUpsellDropdownOpen(false)
+        setUpsellSearch('')
+        try {
+            const res = await fetch(
+                `/api/restaurants/${selectedRestaurant.slug}/items/${item.id}/upsells`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ suggested_id: candidate.id, position: upsells.length }),
+                }
+            )
+            if (!res.ok) return
+            setUpsells((prev) => [
+                ...prev,
+                {
+                    id: candidate.id,
+                    name: candidate.name,
+                    price: candidate.price,
+                    image_url: candidate.image_url,
+                    description: candidate.description,
+                    is_available: candidate.is_available,
+                    source: 'manual',
+                },
+            ])
+        } catch {
+            // ignore
+        } finally {
+            setUpsellLoading(false)
+        }
+    }
+
+    const handleRemoveUpsell = async (suggestedId: string) => {
+        try {
+            await fetch(
+                `/api/restaurants/${selectedRestaurant.slug}/items/${item.id}/upsells`,
+                {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ suggested_id: suggestedId }),
+                }
+            )
+            setUpsells((prev) => prev.filter((u) => u.id !== suggestedId))
+        } catch {
+            // ignore
+        }
+    }
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -69,6 +164,8 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
                     price: parseFloat(formData.price),
                     category_id: formData.category_id,
                     is_available: formData.is_available,
+                    is_best_seller: formData.is_best_seller,
+                    is_new: formData.is_new,
                     image_url: image_url || null,
                     dietary_tags: formData.dietary_tags,
                     allergen_tags: formData.allergen_tags,
@@ -213,6 +310,120 @@ export function EditItemForm({ item, categories, selectedRestaurant, onUpdate, o
                     >
                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.is_available ? 'left-7' : 'left-1'}`} />
                     </button>
+                </div>
+
+                {/* Smart Highlights */}
+                <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">Highlights</label>
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div>
+                            <span className="font-bold text-slate-700">⭐ Best Seller</span>
+                            <p className="text-xs text-slate-500 mt-0.5">Manually mark this item as a best seller.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, is_best_seller: !formData.is_best_seller })}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${formData.is_best_seller ? 'bg-amber-500' : 'bg-slate-300'}`}
+                        >
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.is_best_seller ? 'left-7' : 'left-1'}`} />
+                        </button>
+                    </div>
+                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div>
+                            <span className="font-bold text-slate-700">✨ New</span>
+                            <p className="text-xs text-slate-500 mt-0.5">Highlight this as a new addition to the menu.</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, is_new: !formData.is_new })}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${formData.is_new ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                        >
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.is_new ? 'left-7' : 'left-1'}`} />
+                        </button>
+                    </div>
+                    {item.is_trending && (
+                        <div className="flex items-center gap-2 px-4 py-3 bg-orange-50 rounded-2xl border border-orange-200">
+                            <span className="text-sm font-bold text-orange-700">🔥 Trending</span>
+                            <span className="text-xs text-orange-500">(auto-calculated from views — read only)</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Upsell Suggestions */}
+                <div className="space-y-2">
+                    <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">
+                        Suggest with this item <span className="normal-case font-normal text-slate-400">({upsells.length}/3)</span>
+                    </label>
+
+                    {upsells.length > 0 && (
+                        <div className="space-y-2">
+                            {upsells.map((u) => (
+                                <div
+                                    key={u.id}
+                                    className="flex items-center justify-between gap-3 px-4 py-3 bg-indigo-50 rounded-2xl border border-indigo-100"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <Link2 className="w-4 h-4 shrink-0 text-indigo-400" />
+                                        <span className="text-sm font-semibold text-slate-800 truncate">{u.name}</span>
+                                        <span className="text-xs text-slate-500 shrink-0">{Number(u.price).toFixed(0)} ден.</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => void handleRemoveUpsell(u.id)}
+                                        className="shrink-0 p-1 text-slate-400 hover:text-rose-500 transition-colors"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {upsells.length < 3 && (
+                        <div ref={searchRef} className="relative">
+                            <div className="flex items-center gap-2 px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                                <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                                <input
+                                    type="text"
+                                    value={upsellSearch}
+                                    onChange={(e) => {
+                                        setUpsellSearch(e.target.value)
+                                        setUpsellDropdownOpen(true)
+                                    }}
+                                    onFocus={() => setUpsellDropdownOpen(true)}
+                                    placeholder="Search items to suggest..."
+                                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+                                />
+                                {upsellLoading && <Loader2 className="w-4 h-4 text-indigo-500 animate-spin shrink-0" />}
+                            </div>
+
+                            {upsellDropdownOpen && filteredItems.length > 0 && (
+                                <div className="absolute z-50 mt-1 w-full rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden max-h-48 overflow-y-auto">
+                                    {filteredItems.slice(0, 8).map((candidate) => (
+                                        <button
+                                            key={candidate.id}
+                                            type="button"
+                                            onMouseDown={(e) => e.preventDefault()}
+                                            onClick={() => void handleAddUpsell(candidate)}
+                                            className="flex items-center justify-between w-full px-4 py-2.5 text-left hover:bg-indigo-50 transition-colors"
+                                        >
+                                            <span className="text-sm font-semibold text-slate-800 truncate">{candidate.name}</span>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className="text-xs text-slate-500">{Number(candidate.price).toFixed(0)} ден.</span>
+                                                <Plus className="w-4 h-4 text-indigo-500" />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <p className="text-xs text-slate-400 ml-1">
+                        {upsells.length === 0
+                            ? 'No suggestions set — we\'ll auto-suggest similar items to customers.'
+                            : 'These items will appear in "You might also like" when customers view this dish.'}
+                    </p>
                 </div>
             </div>
 

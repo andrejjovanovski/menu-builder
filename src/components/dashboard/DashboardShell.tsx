@@ -3,6 +3,7 @@
 import { ReactNode, useEffect, useMemo } from "react";
 import {
   BarChart3,
+  BellRing,
   Building2,
   CreditCard,
   QrCode,
@@ -17,7 +18,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { ThemeToggle } from "@/src/components/ui/theme-toggle";
 
-type SectionKey = "menu-builder" | "analytics" | "settings" | "qr" | "payments";
+type SectionKey = "menu-builder" | "analytics" | "settings" | "qr" | "payments" | "requests";
 
 interface DashboardShellProps {
   section: SectionKey;
@@ -56,6 +57,11 @@ export function DashboardShell({ section, children }: DashboardShellProps) {
         href: dashboard.buildSectionHref("/dashboard/qr"),
         icon: QrCode,
         label: "QR Codes",
+      },
+      {
+        href: dashboard.buildSectionHref("/dashboard/requests"),
+        icon: BellRing,
+        label: "Requests",
       },
     ];
 

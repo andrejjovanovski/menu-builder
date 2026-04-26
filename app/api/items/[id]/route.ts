@@ -48,6 +48,8 @@ export async function PATCH(
     ["price", body.price],
     ["category_id", body.category_id],
     ["is_available", body.is_available],
+    ["is_best_seller", body.is_best_seller],
+    ["is_new", body.is_new],
     ["image_url", body.image_url],
     ["dietary_tags", body.dietary_tags !== undefined ? JSON.stringify(normalizeTagArray(body.dietary_tags)) : undefined],
     ["allergen_tags", body.allergen_tags !== undefined ? JSON.stringify(normalizeTagArray(body.allergen_tags)) : undefined],

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import MenuHero from "@/src/components/public-menu/MenuHero";
 import MenuSection from "@/src/components/public-menu/MenuSection";
 import { AskRecommendationSheet } from "@/src/components/public-menu/AskRecommendationSheet";
 import { FeedbackPrompt } from "@/src/components/public-menu/FeedbackPrompt";
+import { CallWaiterSheet } from "@/src/components/public-menu/CallWaiterSheet";
 import ProductBottomSheet, {
   type ProductBottomSheetItem,
 } from "@/src/components/public-menu/ProductBottomSheet";
@@ -51,15 +53,40 @@ export default function RestaurantMenuClient({
   const [avoidedAllergenTags, setAvoidedAllergenTags] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  const searchParams = useSearchParams();
+  const tableIdentifier = searchParams.get("table");
+
   const transformItems = (items: MenuItem[]) =>
     items.map((item) => ({
+      id: item.id,
       name: item.name,
       description: item.description || "",
-      price: `${item.price.toFixed(0)} ден.`,
+      price: `${Number(item.price).toFixed(0)} ден.`,
       image: item.image_url,
       dietary_tags: item.dietary_tags || [],
       allergen_tags: item.allergen_tags || [],
       is_available: item.is_available,
+      is_best_seller: item.is_best_seller,
+      is_new: item.is_new,
+      is_trending: item.is_trending,
+    }));
+
+  const popularItems = categoriesWithItems
+    .flatMap((c) => c.items)
+    .filter((item) => item.is_available && (item.is_best_seller || item.is_trending))
+    .slice(0, 6)
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description || "",
+      price: `${Number(item.price).toFixed(0)} ден.`,
+      image: item.image_url,
+      dietary_tags: item.dietary_tags || [],
+      allergen_tags: item.allergen_tags || [],
+      is_available: item.is_available,
+      is_best_seller: item.is_best_seller,
+      is_new: item.is_new,
+      is_trending: item.is_trending,
     }));
 
   const isVisualMode = restaurant.appearance === "visual";
@@ -171,7 +198,12 @@ export default function RestaurantMenuClient({
         )}
       </AnimatePresence>
 
-      <ProductBottomSheet item={selectedItem} onClose={() => setSelectedItem(null)} />
+      <ProductBottomSheet
+        item={selectedItem}
+        onClose={() => setSelectedItem(null)}
+        restaurantSlug={restaurant.slug}
+        onUpsellClick={(upsellItem) => setSelectedItem(upsellItem)}
+      />
       {restaurant.recommendation_ai_enabled !== false && (
         <AskRecommendationSheet
           restaurantSlug={restaurant.slug}
@@ -180,6 +212,12 @@ export default function RestaurantMenuClient({
       )}
       {restaurant.feedback_enabled !== false && (
         <FeedbackPrompt restaurantSlug={restaurant.slug} />
+      )}
+      {restaurant.call_waiter_enabled && (
+        <CallWaiterSheet
+          restaurantSlug={restaurant.slug}
+          tableIdentifier={tableIdentifier}
+        />
       )}
 
       {/* Floating Menu Container */}
@@ -261,6 +299,67 @@ export default function RestaurantMenuClient({
           estYear={restaurant.est_year}
           logoImage={restaurant.logo_url}
         />
+
+        {restaurant.smart_highlights_enabled !== false && popularItems.length > 0 && (
+          <section className="mt-8">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
+              Popular right now
+            </p>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {popularItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    if (restaurant.open_bottom_sheet_on_click !== false) {
+                      void trackRestaurantEvent({
+                        restaurantSlug: restaurant.slug,
+                        eventType: "item_open",
+                        itemId: item.id,
+                      });
+                      setSelectedItem(item);
+                    }
+                  }}
+                  className="shrink-0 w-32 rounded-2xl border border-accent/20 bg-[var(--card)]/70 overflow-hidden text-left hover:border-accent/50 transition-colors"
+                >
+                  {item.image ? (
+                    <div className="relative w-full aspect-square overflow-hidden">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full aspect-square bg-accent/10 flex items-center justify-center text-3xl">
+                      🍽️
+                    </div>
+                  )}
+                  <div className="p-2.5">
+                    <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">
+                      {item.name}
+                    </p>
+                    <p className="mt-1 text-xs font-bold text-[var(--accent)]">
+                      {item.price}
+                    </p>
+                    <div className="mt-1.5">
+                      {item.is_trending && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[9px] font-bold text-orange-300">
+                          🔥 Trending
+                        </span>
+                      )}
+                      {!item.is_trending && item.is_best_seller && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+                          ⭐ Best Seller
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {restaurant.menu_filters_enabled !== false && (
         <section className="mt-8 rounded-[28px] border border-accent/15 bg-[var(--card)]/70 backdrop-blur-md overflow-hidden">
@@ -363,16 +462,11 @@ export default function RestaurantMenuClient({
                 onItemWithImageClick={
                   restaurant.open_bottom_sheet_on_click !== false
                     ? (item) => {
-                        const sourceItem = category.items.find(
-                          (candidate) => candidate.name === item.name
-                        );
-                        if (sourceItem?.id) {
-                          void trackRestaurantEvent({
-                            restaurantSlug: restaurant.slug,
-                            eventType: "item_open",
-                            itemId: sourceItem.id,
-                          });
-                        }
+                        void trackRestaurantEvent({
+                          restaurantSlug: restaurant.slug,
+                          eventType: "item_open",
+                          itemId: item.id,
+                        });
                         setSelectedItem(item);
                       }
                     : undefined
@@ -395,6 +489,19 @@ export default function RestaurantMenuClient({
           <p className="text-muted-foreground/60 text-xs">
             {restaurant.footer_quote}
           </p>
+          {restaurant.show_branding !== false && (
+            <div className="mt-6">
+              <a
+                href="https://menucup.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+              >
+                Powered by
+                <span className="font-bold tracking-tight">MenuCup</span>
+              </a>
+            </div>
+          )}
         </footer>
       </div>
     </div>

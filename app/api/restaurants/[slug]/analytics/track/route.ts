@@ -3,7 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { getItemById, getRestaurantBySlug } from "@/lib/repositories";
 
-const VALID_EVENTS = new Set(["menu_view", "item_open", "recommendation_request"]);
+const VALID_EVENTS = new Set([
+  "menu_view",
+  "item_open",
+  "recommendation_request",
+  "upsell_impression",
+  "upsell_tap",
+]);
 
 export async function POST(
   request: NextRequest,

@@ -62,6 +62,9 @@ export async function PATCH(
     "recommendation_ai_enabled",
     "menu_filters_enabled",
     "feedback_enabled",
+    "smart_highlights_enabled",
+    "show_branding",
+    "call_waiter_enabled",
     "qr_code_url",
   ] as const;
 

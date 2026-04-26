@@ -26,6 +26,9 @@ export interface Restaurant {
   recommendation_ai_enabled?: boolean;
   menu_filters_enabled?: boolean;
   feedback_enabled?: boolean;
+  smart_highlights_enabled?: boolean;
+  show_branding?: boolean;
+  call_waiter_enabled?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -51,9 +54,42 @@ export interface MenuItem {
   dietary_tags?: string[];
   allergen_tags?: string[];
   is_available: boolean;
+  is_best_seller: boolean;
+  is_new: boolean;
+  is_trending: boolean;
   order: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface Upsell {
+  id: string;
+  item_id: string;
+  suggested_id: string;
+  position: number;
+  created_at: string;
+}
+
+export type TableRequestType = 'call_waiter' | 'ask_for_bill';
+export type TableRequestStatus = 'pending' | 'done';
+
+export interface TableRequest {
+  id: string;
+  restaurant_id: string;
+  table_identifier: string | null;
+  request_type: TableRequestType;
+  status: TableRequestStatus;
+  created_at: string;
+}
+
+export interface UpsellItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  image_url?: string;
+  is_available: boolean;
+  source: 'manual' | 'auto';
 }
 
 export interface CreateRestaurantInput {
@@ -100,6 +136,8 @@ export interface UpdateMenuItemInput {
   dietary_tags?: string[];
   allergen_tags?: string[];
   is_available?: boolean;
+  is_best_seller?: boolean;
+  is_new?: boolean;
   order?: number;
 }
 
@@ -122,6 +160,8 @@ export interface RestaurantSettings {
   recommendationAiEnabled: boolean;
   menuFiltersEnabled: boolean;
   feedbackEnabled: boolean;
+  smartHighlightsEnabled: boolean;
+  callWaiterEnabled: boolean;
   facebookUrl?: string;
   instagramUrl?: string;
   tiktokUrl?: string;
@@ -167,7 +207,9 @@ export interface UpdatePaymentInput {
 export type AnalyticsEventType =
   | "menu_view"
   | "item_open"
-  | "recommendation_request";
+  | "recommendation_request"
+  | "upsell_impression"
+  | "upsell_tap";
 
 export interface RestaurantAnalyticsSummary {
   totals: {

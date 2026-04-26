@@ -162,6 +162,8 @@ export function RestaurantSettingsModal({
       recommendationAiEnabled: true,
       menuFiltersEnabled: true,
       feedbackEnabled: true,
+      smartHighlightsEnabled: true,
+      callWaiterEnabled: false,
       facebookUrl: "",
       instagramUrl: "",
       tiktokUrl: "",
@@ -444,6 +446,66 @@ export function RestaurantSettingsModal({
                       <span
                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
                           settings.feedbackEnabled ? "translate-x-5" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">
+                        Enable smart highlights
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Show "Popular right now" strip and trending / best seller badges on the public menu.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.smartHighlightsEnabled}
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          smartHighlightsEnabled: !settings.smartHighlightsEnabled,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                        settings.smartHighlightsEnabled ? "bg-indigo-600" : "bg-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
+                          settings.smartHighlightsEnabled ? "translate-x-5" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">
+                        Enable call waiter
+                      </p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Show a "Call Waiter" button on the public menu so guests can signal staff.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.callWaiterEnabled}
+                      onClick={() =>
+                        setSettings({
+                          ...settings,
+                          callWaiterEnabled: !settings.callWaiterEnabled,
+                        })
+                      }
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
+                        settings.callWaiterEnabled ? "bg-indigo-600" : "bg-slate-200"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition ${
+                          settings.callWaiterEnabled ? "translate-x-5" : "translate-x-0.5"
                         }`}
                       />
                     </button>

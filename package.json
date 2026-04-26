@@ -10,7 +10,9 @@
     "db:migrate:auth": "node scripts/migrate-auth.mjs",
     "db:migrate:app": "node scripts/apply-app-schema.mjs",
     "db:setup": "node scripts/setup-local.mjs",
-    "admin:create": "node scripts/create-admin-user.mjs"
+    "admin:create": "node scripts/create-admin-user.mjs",
+    "db:migrate:features": "node scripts/migrate-highlights-upsells.mjs",
+    "db:calc-trending": "node scripts/calc-trending.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1029.0",

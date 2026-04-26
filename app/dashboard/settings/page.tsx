@@ -44,6 +44,8 @@ function SettingsContent({
       recommendationAiEnabled: selectedRestaurant.recommendation_ai_enabled ?? true,
       menuFiltersEnabled: selectedRestaurant.menu_filters_enabled ?? true,
       feedbackEnabled: selectedRestaurant.feedback_enabled ?? true,
+      smartHighlightsEnabled: selectedRestaurant.smart_highlights_enabled ?? true,
+      callWaiterEnabled: selectedRestaurant.call_waiter_enabled ?? false,
       facebookUrl: selectedRestaurant.facebook_url || "",
       instagramUrl: selectedRestaurant.instagram_url || "",
       tiktokUrl: selectedRestaurant.tiktok_url || "",
@@ -97,6 +99,8 @@ function SettingsContent({
           recommendation_ai_enabled: settings.recommendationAiEnabled,
           menu_filters_enabled: settings.menuFiltersEnabled,
           feedback_enabled: settings.feedbackEnabled,
+          smart_highlights_enabled: settings.smartHighlightsEnabled,
+          call_waiter_enabled: settings.callWaiterEnabled,
           facebook_url: settings.facebookUrl ?? "",
           instagram_url: settings.instagramUrl ?? "",
           tiktok_url: settings.tiktokUrl ?? "",
@@ -167,6 +171,14 @@ function SettingsContent({
               [
                 "Quick feedback",
                 selectedRestaurant.feedback_enabled === false ? "Off" : "On",
+              ],
+              [
+                "Smart highlights",
+                selectedRestaurant.smart_highlights_enabled === false ? "Off" : "On",
+              ],
+              [
+                "Call waiter",
+                selectedRestaurant.call_waiter_enabled ? "On" : "Off",
               ],
             ]}
           />

@@ -1,10 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import Image from "next/image";
 import { toTagLabel } from "@/src/utils/menuTags";
+import { UpsellItem } from "@/src/types";
+import { trackRestaurantEvent } from "@/src/utils/analytics";
 
 export interface ProductBottomSheetItem {
+  id: string;
   name: string;
   description: string;
   price: string;
@@ -12,14 +17,114 @@ export interface ProductBottomSheetItem {
   dietary_tags?: string[];
   allergen_tags?: string[];
   is_available?: boolean;
+  is_best_seller?: boolean;
+  is_new?: boolean;
+  is_trending?: boolean;
 }
 
 interface ProductBottomSheetProps {
   item: ProductBottomSheetItem | null;
   onClose: () => void;
+  restaurantSlug: string;
+  onUpsellClick?: (item: ProductBottomSheetItem) => void;
 }
 
-export default function ProductBottomSheet({ item, onClose }: ProductBottomSheetProps) {
+function HighlightBadge({ item }: { item: ProductBottomSheetItem }) {
+  if (item.is_trending) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/20 px-2.5 py-1 text-xs font-bold text-orange-300 border border-orange-500/30">
+        🔥 Trending
+      </span>
+    );
+  }
+  if (item.is_best_seller) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-bold text-amber-300 border border-amber-500/30">
+        ⭐ Best Seller
+      </span>
+    );
+  }
+  if (item.is_new) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-300 border border-emerald-500/30">
+        ✨ New
+      </span>
+    );
+  }
+  return null;
+}
+
+export default function ProductBottomSheet({
+  item,
+  onClose,
+  restaurantSlug,
+  onUpsellClick,
+}: ProductBottomSheetProps) {
+  const [upsells, setUpsells] = useState<UpsellItem[]>([]);
+  const [upsellsTracked, setUpsellsTracked] = useState(false);
+
+  useEffect(() => {
+    if (!item) {
+      setUpsells([]);
+      setUpsellsTracked(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchUpsells() {
+      if (!item) return;
+      try {
+        const res = await fetch(
+          `/api/restaurants/${restaurantSlug}/items/${item.id}/upsells`
+        );
+        if (!res.ok || cancelled) return;
+        const data: UpsellItem[] = await res.json();
+        if (!cancelled) {
+          setUpsells(data);
+          setUpsellsTracked(false);
+        }
+      } catch {
+        // silently ignore
+      }
+    }
+
+    void fetchUpsells();
+    return () => { cancelled = true; };
+  }, [item?.id, restaurantSlug]);
+
+  // Track upsell impression once upsells are visible
+  useEffect(() => {
+    if (upsells.length > 0 && item && !upsellsTracked) {
+      void trackRestaurantEvent({
+        restaurantSlug,
+        eventType: "upsell_impression",
+        itemId: item.id,
+      });
+      setUpsellsTracked(true);
+    }
+  }, [upsells, item, upsellsTracked, restaurantSlug]);
+
+  const handleUpsellTap = (upsell: UpsellItem) => {
+    if (item) {
+      void trackRestaurantEvent({
+        restaurantSlug,
+        eventType: "upsell_tap",
+        itemId: upsell.id,
+      });
+    }
+    if (onUpsellClick) {
+      onUpsellClick({
+        id: upsell.id,
+        name: upsell.name,
+        description: upsell.description || "",
+        price: `${Number(upsell.price).toFixed(0)} ден.`,
+        image: upsell.image_url,
+        is_available: upsell.is_available,
+      });
+    }
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -52,9 +157,9 @@ export default function ProductBottomSheet({ item, onClose }: ProductBottomSheet
               >
                 <X size={18} />
               </button>
+
               {item.image && (
                 <div className="relative w-full aspect-[4/3] min-h-[220px] bg-muted/20 shrink-0 overflow-hidden">
-                  {/* Native img so the same URL as the card is shown immediately from cache during the opening animation */}
                   <img
                     src={item.image}
                     alt={item.name}
@@ -71,6 +176,7 @@ export default function ProductBottomSheet({ item, onClose }: ProductBottomSheet
                   )}
                 </div>
               )}
+
               <div className="p-5 pb-8">
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <h2 className="font-display text-xl md:text-2xl text-foreground">
@@ -80,9 +186,17 @@ export default function ProductBottomSheet({ item, onClose }: ProductBottomSheet
                     {item.price}
                   </span>
                 </div>
+
+                {(item.is_trending || item.is_best_seller || item.is_new) && (
+                  <div className="mb-3">
+                    <HighlightBadge item={item} />
+                  </div>
+                )}
+
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                   {item.description || "No description."}
                 </p>
+
                 {(item.dietary_tags?.length || item.allergen_tags?.length) ? (
                   <div className="mt-4 space-y-3">
                     {!!item.dietary_tags?.length && (
@@ -121,6 +235,48 @@ export default function ProductBottomSheet({ item, onClose }: ProductBottomSheet
                     )}
                   </div>
                 ) : null}
+
+                {upsells.length > 0 && (
+                  <div className="mt-6">
+                    <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-[var(--accent)]">
+                      You might also like
+                    </p>
+                    <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+                      {upsells.map((upsell) => (
+                        <button
+                          key={upsell.id}
+                          type="button"
+                          onClick={() => handleUpsellTap(upsell)}
+                          className="shrink-0 w-28 rounded-xl border border-accent/20 bg-black/20 overflow-hidden text-left hover:border-accent/50 transition-colors"
+                        >
+                          {upsell.image_url ? (
+                            <div className="relative w-full aspect-square overflow-hidden">
+                              <Image
+                                src={upsell.image_url}
+                                alt={upsell.name}
+                                fill
+                                className="object-cover"
+                                sizes="112px"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-full aspect-square bg-accent/10 flex items-center justify-center text-2xl">
+                              🍽️
+                            </div>
+                          )}
+                          <div className="p-2">
+                            <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">
+                              {upsell.name}
+                            </p>
+                            <p className="mt-1 text-xs font-bold text-[var(--accent)]">
+                              {Number(upsell.price).toFixed(0)} ден.
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

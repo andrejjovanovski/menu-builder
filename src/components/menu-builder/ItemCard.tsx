@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, TrendingUp } from "lucide-react";
 import { MenuItem } from "@/src/types";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -103,6 +103,21 @@ export function ItemCard({ item, categoryName, onDelete, onEdit, index }: Props)
                         <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
               {categoryName || "Uncategorized"}
             </span>
+                        {item.is_trending && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-600">
+                                <TrendingUp className="w-3 h-3" /> Trending
+                            </span>
+                        )}
+                        {item.is_best_seller && (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                                ⭐ Best Seller
+                            </span>
+                        )}
+                        {item.is_new && (
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                ✨ New
+                            </span>
+                        )}
                     </div>
                     <p className="text-slate-500 text-sm line-clamp-1">{item.description}</p>
                     {!!item.dietary_tags?.length && (

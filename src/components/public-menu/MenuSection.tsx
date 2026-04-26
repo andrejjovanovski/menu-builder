@@ -6,11 +6,15 @@ import Image from "next/image";
 // --- Types ---
 
 interface MenuItem {
+    id: string;
     name: string;
     description: string;
     price: string;
     image?: string;
     is_available?: boolean;
+    is_best_seller?: boolean;
+    is_new?: boolean;
+    is_trending?: boolean;
 }
 
 interface MenuSectionProps {
@@ -19,6 +23,33 @@ interface MenuSectionProps {
     delay?: number;
     defaultOpen?: boolean;
     onItemWithImageClick?: (item: MenuItem) => void;
+}
+
+// --- Helpers ---
+
+function HighlightBadge({ item }: { item: MenuItem }) {
+    if (item.is_trending) {
+        return (
+            <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/20 px-2 py-0.5 text-[10px] font-bold text-orange-300 border border-orange-500/30">
+                🔥 Trending
+            </span>
+        );
+    }
+    if (item.is_best_seller) {
+        return (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-500/30">
+                ⭐ Best Seller
+            </span>
+        );
+    }
+    if (item.is_new) {
+        return (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-500/30">
+                ✨ New
+            </span>
+        );
+    }
+    return null;
 }
 
 // --- Sub-components ---
@@ -87,6 +118,9 @@ const MenuItemCard = ({
                     <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground md:text-sm">
                         {item.description}
                     </p>
+                    <div className="mt-2">
+                        <HighlightBadge item={item} />
+                    </div>
                 </div>
             </motion.div>
         );
@@ -118,6 +152,9 @@ const MenuItemCard = ({
             <p className="mt-1 max-w-md text-sm text-muted-foreground">
                 {item.description}
             </p>
+            <div className="mt-1.5">
+                <HighlightBadge item={item} />
+            </div>
         </motion.div>
     );
 };

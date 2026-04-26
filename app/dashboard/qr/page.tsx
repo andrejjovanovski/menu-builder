@@ -35,6 +35,7 @@ function QRPageContent({ selectedRestaurant }: { selectedRestaurant: Restaurant 
       <RestaurantQRCodePanel
         restaurantName={selectedRestaurant.name}
         restaurantSlug={selectedRestaurant.slug}
+        callWaiterEnabled={selectedRestaurant.call_waiter_enabled ?? false}
       />
     </div>
   );

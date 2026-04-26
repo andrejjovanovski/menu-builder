@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import { getRestaurantBySlug, getRestaurantCategories, getRestaurantItems } from '@/lib/repositories'
 import { MenuCategory, MenuItem, Restaurant } from '@/src/types'
@@ -25,7 +26,11 @@ export default async function RestaurantPage({ params }: { params: Promise<{ res
     items: (allItems || []).filter((item) => item.category_id === category.id),
   }))
 
-  return <RestaurantMenuClient categoriesWithItems={categoriesWithItems} restaurant={restaurant} />
+  return (
+    <Suspense>
+      <RestaurantMenuClient categoriesWithItems={categoriesWithItems} restaurant={restaurant} />
+    </Suspense>
+  )
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ restaurant: string }> }) {

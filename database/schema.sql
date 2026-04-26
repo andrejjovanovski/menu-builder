@@ -53,6 +53,9 @@ create table if not exists restaurants (
   recommendation_ai_enabled boolean not null default true,
   menu_filters_enabled boolean not null default true,
   feedback_enabled boolean not null default true,
+  smart_highlights_enabled boolean not null default true,
+  show_branding boolean not null default true,
+  call_waiter_enabled boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -83,6 +86,9 @@ create table if not exists menu_items (
   dietary_tags jsonb not null default '[]'::jsonb,
   allergen_tags jsonb not null default '[]'::jsonb,
   is_available boolean not null default true,
+  is_best_seller boolean not null default false,
+  is_new boolean not null default false,
+  is_trending boolean not null default false,
   "order" integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -105,10 +111,22 @@ create table if not exists menu_analytics_events (
   id uuid primary key,
   restaurant_id uuid not null references restaurants(id) on delete cascade,
   item_id uuid references menu_items(id) on delete set null,
-  event_type text not null check (event_type in ('menu_view', 'item_open', 'recommendation_request')),
+  event_type text not null check (event_type in (
+    'menu_view', 'item_open', 'recommendation_request',
+    'upsell_impression', 'upsell_tap'
+  )),
   session_id text,
   metadata jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
+);
+
+create table if not exists item_upsells (
+  id           uuid primary key default gen_random_uuid(),
+  item_id      uuid not null references menu_items(id) on delete cascade,
+  suggested_id uuid not null references menu_items(id) on delete cascade,
+  position     integer not null default 0,
+  created_at   timestamptz not null default now(),
+  unique (item_id, suggested_id)
 );
 
 create table if not exists menu_feedback_responses (
@@ -138,3 +156,16 @@ create index if not exists idx_menu_analytics_event_type on menu_analytics_event
 create index if not exists idx_menu_analytics_created_at on menu_analytics_events(created_at desc);
 create index if not exists idx_menu_feedback_restaurant_id on menu_feedback_responses(restaurant_id);
 create index if not exists idx_menu_feedback_rating on menu_feedback_responses(rating);
+create index if not exists idx_item_upsells_item_id on item_upsells(item_id);
+
+create table if not exists table_requests (
+  id               uuid primary key default gen_random_uuid(),
+  restaurant_id    uuid not null references restaurants(id) on delete cascade,
+  table_identifier text,
+  request_type     text not null check (request_type in ('call_waiter', 'ask_for_bill')),
+  status           text not null default 'pending' check (status in ('pending', 'done')),
+  created_at       timestamptz not null default now()
+);
+
+create index if not exists idx_table_requests_restaurant_id on table_requests(restaurant_id);
+create index if not exists idx_table_requests_status on table_requests(status);
