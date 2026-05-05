@@ -41,3 +41,31 @@ export async function getItemById(id: string) {
   const result = await query("select * from menu_items where id = $1 limit 1", [id]);
   return result.rows[0] ?? null;
 }
+
+export async function getActivePromotionsForRestaurant(restaurantId: string) {
+  const result = await query(
+    `select * from promotions
+     where restaurant_id = $1
+       and status = 'active'
+       and valid_until > now()
+     order by created_at asc`,
+    [restaurantId]
+  );
+  return result.rows;
+}
+
+export async function getPromotionsForRestaurant(restaurantId: string) {
+  const result = await query(
+    "select * from promotions where restaurant_id = $1 order by created_at desc",
+    [restaurantId]
+  );
+  return result.rows;
+}
+
+export async function getPromotionById(id: string) {
+  const result = await query(
+    "select p.*, r.owner_id from promotions p join restaurants r on r.id = p.restaurant_id where p.id = $1 limit 1",
+    [id]
+  );
+  return result.rows[0] ?? null;
+}

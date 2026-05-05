@@ -1,7 +1,12 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
-import { getRestaurantBySlug, getRestaurantCategories, getRestaurantItems } from '@/lib/repositories'
-import { MenuCategory, MenuItem, Restaurant } from '@/src/types'
+import {
+  getActivePromotionsForRestaurant,
+  getRestaurantBySlug,
+  getRestaurantCategories,
+  getRestaurantItems,
+} from '@/lib/repositories'
+import { MenuCategory, MenuItem, Promotion, Restaurant } from '@/src/types'
 import RestaurantMenuClient from '@/src/components/public-menu/RestaurantMenuClient'
 
 interface CategoryWithItems extends MenuCategory {
@@ -16,10 +21,11 @@ export default async function RestaurantPage({ params }: { params: Promise<{ res
     notFound()
   }
 
-  const [categories, allItems] = await Promise.all([
+  const [categories, allItems, promotions] = await Promise.all([
     getRestaurantCategories(restaurant.id),
     getRestaurantItems(restaurant.id),
-  ]) as [MenuCategory[], MenuItem[]]
+    getActivePromotionsForRestaurant(restaurant.id),
+  ]) as [MenuCategory[], MenuItem[], Promotion[]]
 
   const categoriesWithItems: CategoryWithItems[] = (categories || []).map((category) => ({
     ...category,
@@ -28,7 +34,11 @@ export default async function RestaurantPage({ params }: { params: Promise<{ res
 
   return (
     <Suspense>
-      <RestaurantMenuClient categoriesWithItems={categoriesWithItems} restaurant={restaurant} />
+      <RestaurantMenuClient
+        categoriesWithItems={categoriesWithItems}
+        restaurant={restaurant}
+        promotions={promotions || []}
+      />
     </Suspense>
   )
 }

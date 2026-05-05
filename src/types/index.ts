@@ -211,6 +211,38 @@ export type AnalyticsEventType =
   | "upsell_impression"
   | "upsell_tap";
 
+export type PromotionStatus = 'active' | 'inactive';
+export type PromotionDisplayFrequency = 'once_per_session' | 'every_load';
+
+export interface Promotion {
+  id: string;
+  restaurant_id: string;
+  image_url: string;
+  duration_seconds: number;
+  valid_until: string;
+  status: PromotionStatus;
+  display_frequency: PromotionDisplayFrequency;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatePromotionInput {
+  restaurant_id: string;
+  image_url: string;
+  duration_seconds: number;
+  valid_until: string;
+  status?: PromotionStatus;
+  display_frequency?: PromotionDisplayFrequency;
+}
+
+export interface UpdatePromotionInput {
+  image_url?: string;
+  duration_seconds?: number;
+  valid_until?: string;
+  status?: PromotionStatus;
+  display_frequency?: PromotionDisplayFrequency;
+}
+
 export interface RestaurantAnalyticsSummary {
   totals: {
     menuViews: number;

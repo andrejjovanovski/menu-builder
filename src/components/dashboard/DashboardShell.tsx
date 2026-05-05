@@ -6,6 +6,7 @@ import {
   BellRing,
   Building2,
   CreditCard,
+  Megaphone,
   QrCode,
   Settings,
   Store,
@@ -18,7 +19,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { ThemeToggle } from "@/src/components/ui/theme-toggle";
 
-type SectionKey = "menu-builder" | "analytics" | "settings" | "qr" | "payments" | "requests";
+type SectionKey = "menu-builder" | "analytics" | "settings" | "qr" | "payments" | "requests" | "promotions";
 
 interface DashboardShellProps {
   section: SectionKey;
@@ -62,6 +63,11 @@ export function DashboardShell({ section, children }: DashboardShellProps) {
         href: dashboard.buildSectionHref("/dashboard/requests"),
         icon: BellRing,
         label: "Requests",
+      },
+      {
+        href: dashboard.buildSectionHref("/dashboard/promotions"),
+        icon: Megaphone,
+        label: "Promotions",
       },
     ];
 

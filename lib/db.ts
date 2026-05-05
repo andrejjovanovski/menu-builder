@@ -16,9 +16,7 @@ function createPool() {
     ssl:
       process.env.DATABASE_SSL === "disable"
         ? false
-        : process.env.NODE_ENV === "production"
-          ? { rejectUnauthorized: false }
-          : false,
+        : { rejectUnauthorized: false },
   });
 }
 

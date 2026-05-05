@@ -8,11 +8,12 @@ import MenuSection from "@/src/components/public-menu/MenuSection";
 import { AskRecommendationSheet } from "@/src/components/public-menu/AskRecommendationSheet";
 import { FeedbackPrompt } from "@/src/components/public-menu/FeedbackPrompt";
 import { CallWaiterSheet } from "@/src/components/public-menu/CallWaiterSheet";
+import PromotionPopup from "@/src/components/public-menu/PromotionPopup";
 import ProductBottomSheet, {
   type ProductBottomSheetItem,
 } from "@/src/components/public-menu/ProductBottomSheet";
 import { ChevronDown, CircleEllipsis, Facebook, Filter, Instagram, Phone, X } from "lucide-react";
-import { MenuItem, MenuCategory, Restaurant } from "@/src/types";
+import { MenuItem, MenuCategory, Promotion, Restaurant } from "@/src/types";
 import { trackRestaurantEvent } from "@/src/utils/analytics";
 import { ALLERGEN_TAGS, DIETARY_TAGS } from "@/src/utils/menuTags";
 
@@ -41,11 +42,13 @@ interface CategoryWithItems extends MenuCategory {
 interface RestaurantMenuClientProps {
   categoriesWithItems: CategoryWithItems[];
   restaurant: Restaurant;
+  promotions?: Promotion[];
 }
 
 export default function RestaurantMenuClient({
   categoriesWithItems,
   restaurant,
+  promotions = [],
 }: RestaurantMenuClientProps) {
   const [isSocialOpen, setIsSocialOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProductBottomSheetItem | null>(null);
@@ -197,6 +200,8 @@ export default function RestaurantMenuClient({
           />
         )}
       </AnimatePresence>
+
+      <PromotionPopup promotions={promotions} restaurantId={restaurant.id} />
 
       <ProductBottomSheet
         item={selectedItem}
