@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { DollarSign, ImagePlus, X, Loader2 } from 'lucide-react'
 import { Restaurant, MenuCategory, MenuItem } from '@/src/types'
-import { supabaseClient } from '@/lib/supabase'
+import { uploadAsset } from '@/src/utils/uploads'
+import { ALLERGEN_TAGS, DIETARY_TAGS } from '@/src/utils/menuTags'
 
 interface CreateItemFormProps {
     categories: MenuCategory[]
@@ -16,6 +17,8 @@ export function CreateItemForm({ categories, selectedRestaurant, onCreate }: Cre
     const [description, setDescription] = useState('')
     const [price, setPrice] = useState('')
     const [categoryId, setCategoryId] = useState('')
+    const [dietaryTags, setDietaryTags] = useState<string[]>([])
+    const [allergenTags, setAllergenTags] = useState<string[]>([])
 
     // Image Upload State
     const [imageFile, setImageFile] = useState<File | null>(null)
@@ -30,24 +33,6 @@ export function CreateItemForm({ categories, selectedRestaurant, onCreate }: Cre
         }
     }
 
-    const uploadImage = async (file: File) => {
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random()}.${fileExt}`
-        const filePath = `${selectedRestaurant.id}/${fileName}`
-
-        const { error: uploadError } = await supabaseClient.storage
-            .from('menu-items') // Ensure this bucket exists in Supabase
-            .upload(filePath, file)
-
-        if (uploadError) throw uploadError
-
-        const { data } = supabaseClient.storage
-            .from('menu-items')
-            .getPublicUrl(filePath)
-
-        return data.publicUrl
-    }
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!name.trim() || !price || !categoryId || !selectedRestaurant) return
@@ -57,7 +42,7 @@ export function CreateItemForm({ categories, selectedRestaurant, onCreate }: Cre
         try {
             let image_url = ''
             if (imageFile) {
-                image_url = await uploadImage(imageFile)
+                image_url = await uploadAsset(imageFile, `menu-items/${selectedRestaurant.id}`)
             }
 
             const category = categories.find((c) => c.id === categoryId)
@@ -71,6 +56,8 @@ export function CreateItemForm({ categories, selectedRestaurant, onCreate }: Cre
                     description: description.trim() || undefined,
                     price: parseFloat(price),
                     image_url: image_url || undefined,
+                    dietary_tags: dietaryTags,
+                    allergen_tags: allergenTags,
                     is_available: true,
                     order: 0,
                 }),
@@ -81,6 +68,7 @@ export function CreateItemForm({ categories, selectedRestaurant, onCreate }: Cre
                 onCreate(data)
                 // Reset Form
                 setName(''); setDescription(''); setPrice(''); setCategoryId('')
+                setDietaryTags([]); setAllergenTags([])
                 setImageFile(null); setImagePreview(null)
             }
         } catch (error) {
@@ -163,6 +151,28 @@ export function CreateItemForm({ categories, selectedRestaurant, onCreate }: Cre
                         placeholder="Ingredients or description..."
                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 min-h-[80px] text-sm"
                     />
+
+                    <TagSelector
+                        title="Dietary Tags"
+                        options={DIETARY_TAGS}
+                        selected={dietaryTags}
+                        onToggle={(value) =>
+                            setDietaryTags((prev) =>
+                                prev.includes(value) ? prev.filter((tag) => tag !== value) : [...prev, value]
+                            )
+                        }
+                    />
+
+                    <TagSelector
+                        title="Allergens"
+                        options={ALLERGEN_TAGS}
+                        selected={allergenTags}
+                        onToggle={(value) =>
+                            setAllergenTags((prev) =>
+                                prev.includes(value) ? prev.filter((tag) => tag !== value) : [...prev, value]
+                            )
+                        }
+                    />
                 </div>
             </div>
 
@@ -174,5 +184,42 @@ export function CreateItemForm({ categories, selectedRestaurant, onCreate }: Cre
                 {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Add to Menu'}
             </button>
         </form>
+    )
+}
+
+function TagSelector({
+    title,
+    options,
+    selected,
+    onToggle,
+}: {
+    title: string
+    options: ReadonlyArray<{ value: string; label: string }>
+    selected: string[]
+    onToggle: (value: string) => void
+}) {
+    return (
+        <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-2 ml-1 tracking-widest">{title}</label>
+            <div className="flex flex-wrap gap-2">
+                {options.map((option) => {
+                    const active = selected.includes(option.value)
+                    return (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => onToggle(option.value)}
+                            className={`px-3 py-2 rounded-full text-xs font-bold border transition-all ${
+                                active
+                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+                            }`}
+                        >
+                            {option.label}
+                        </button>
+                    )
+                })}
+            </div>
+        </div>
     )
 }

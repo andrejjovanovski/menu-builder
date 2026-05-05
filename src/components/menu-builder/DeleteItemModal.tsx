@@ -32,7 +32,7 @@ export function DeleteItemModal({
                 </div>
 
                 <p className="text-slate-900 font-medium text-lg leading-relaxed">
-                    Are you sure you want to delete <span className="font-black">"{itemName}"</span>?
+                    Are you sure you want to delete <span className="font-black">&quot;{itemName}&quot;</span>?
                 </p>
                 <p className="text-slate-500 text-sm mt-2">
                     This will permanently remove the item from your database and your live menu.

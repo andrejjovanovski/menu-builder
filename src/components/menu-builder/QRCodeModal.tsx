@@ -3,7 +3,7 @@
 import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import { Download, X, CloudUpload, CheckCircle2 } from "lucide-react";
-import { createClient } from "@/src/utils/supabase/client";
+import { uploadAsset } from "@/src/utils/uploads";
 
 interface QRCodeModalProps {
     isOpen: boolean;
@@ -16,7 +16,6 @@ export function QRCodeModal({ isOpen, onClose, restaurantSlug, restaurantName }:
     const qrRef = useRef<SVGSVGElement>(null);
     const [isSyncing, setIsSyncing] = useState(false);
     const [isSynced, setIsSynced] = useState(false);
-    const supabase = createClient();
 
     if (!isOpen) return null;
 
@@ -66,32 +65,20 @@ export function QRCodeModal({ isOpen, onClose, restaurantSlug, restaurantName }:
         }
     };
 
-    // Function to sync with Supabase Storage and Database
-    const syncQRCodeWithSupabase = async () => {
+    const syncQRCodeToProfile = async () => {
         setIsSyncing(true);
         try {
             const blob = await getQRCodeBlob();
-            const filePath = `${restaurantSlug}/qr-code.png`;
+            const file = new File([blob], "qr-code.png", { type: "image/png" });
+            const publicUrl = await uploadAsset(file, `restaurant-assets/${restaurantSlug}`);
 
-            // Upload to Storage
-            const { error: uploadError } = await supabase.storage
-                .from("restaurant-assets")
-                .upload(filePath, blob, { upsert: true, contentType: "image/png" });
+            const response = await fetch(`/api/restaurants/${restaurantSlug}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ qr_code_url: publicUrl }),
+            });
 
-            if (uploadError) throw uploadError;
-
-            // Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from("restaurant-assets")
-                .getPublicUrl(filePath);
-
-            // Update Database
-            const { error: dbError } = await supabase
-                .from("restaurants")
-                .update({ qr_code_url: publicUrl })
-                .eq("slug", restaurantSlug);
-
-            if (dbError) throw dbError;
+            if (!response.ok) throw new Error("Failed to save QR code");
 
             setIsSynced(true);
             setTimeout(() => setIsSynced(false), 3000);
@@ -132,7 +119,7 @@ export function QRCodeModal({ isOpen, onClose, restaurantSlug, restaurantName }:
                     </button>
 
                     <button
-                        onClick={syncQRCodeWithSupabase}
+                        onClick={syncQRCodeToProfile}
                         disabled={isSyncing}
                         className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold transition-all border-2 ${
                             isSynced

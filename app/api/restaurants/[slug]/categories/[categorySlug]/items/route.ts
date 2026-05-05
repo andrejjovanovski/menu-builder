@@ -1,130 +1,95 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { CreateMenuItemInput } from '@/src/types'
+import { randomUUID } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db";
+import { getCategoryBySlug, getRestaurantBySlug } from "@/lib/repositories";
+import { requireAppSession } from "@/lib/server-auth";
+
+function normalizeTagArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string; categorySlug: string }> }
 ) {
-  const { slug, categorySlug } = await params
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll() { },
-      },
-    }
-  )
+  const { slug, categorySlug } = await params;
+  const restaurant = await getRestaurantBySlug(slug);
 
-  // Get restaurant
-  const { data: restaurant, error: restError } = await supabase
-    .from('restaurants')
-    .select('id')
-    .eq('slug', slug)
-    .single()
-
-  if (restError || !restaurant) {
-    return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+  if (!restaurant) {
+    return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
   }
 
-  // Get category
-  const { data: category, error: catError } = await supabase
-    .from('menu_categories')
-    .select('id')
-    .eq('restaurant_id', restaurant.id)
-    .eq('slug', categorySlug)
-    .single()
+  const category = await getCategoryBySlug(restaurant.id, categorySlug);
 
-  if (catError || !category) {
-    return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+  if (!category) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
   }
 
-  const { data, error } = await supabase
-    .from('menu_items')
-    .select('*')
-    .eq('category_id', category.id)
-    .order('order')
+  const result = await query(
+    'select * from menu_items where category_id = $1 order by "order" asc, created_at asc',
+    [category.id]
+  );
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json(data)
+  return NextResponse.json(result.rows);
 }
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string; categorySlug: string }> }
 ) {
-  const { slug, categorySlug } = await params
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll() { },
-      },
-    }
-  )
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { error, session } = await requireAppSession();
+  if (error || !session) {
+    return error;
   }
 
-  const { data: restaurant, error: restError } = await supabase
-    .from('restaurants')
-    .select('id, owner_id')
-    .eq('slug', slug)
-    .single()
+  const { slug, categorySlug } = await params;
+  const restaurant = await getRestaurantBySlug(slug);
 
-  if (restError || !restaurant) {
-    return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+  if (!restaurant) {
+    return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
   }
 
-  const isOwner = restaurant.owner_id === user.id
-  if (!isOwner) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Restaurant not found or access denied' }, { status: 404 })
-    }
+  if (session.role !== "admin" && restaurant.owner_id !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Get category
-  const { data: category, error: catError } = await supabase
-    .from('menu_categories')
-    .select('id')
-    .eq('restaurant_id', restaurant.id)
-    .eq('slug', categorySlug)
-    .single()
+  const category = await getCategoryBySlug(restaurant.id, categorySlug);
 
-  if (catError || !category) {
-    return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+  if (!category) {
+    return NextResponse.json({ error: "Category not found" }, { status: 404 });
   }
 
-  try {
-    const body: Omit<CreateMenuItemInput, 'restaurant_id' | 'category_id'> = await request.json()
+  const body = await request.json();
+  const name = String(body.name ?? "").trim();
 
-    const { data, error } = await supabase
-      .from('menu_items')
-      .insert({ ...body, restaurant_id: restaurant.id, category_id: category.id })
-      .select()
-      .single()
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json(data, { status: 201 })
-  } catch (err) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  if (!name || Number.isNaN(Number(body.price))) {
+    return NextResponse.json(
+      { error: "Name and valid price are required" },
+      { status: 400 }
+    );
   }
+
+  const result = await query(
+    `insert into menu_items (
+      id, category_id, restaurant_id, name, description, price, image_url, dietary_tags, allergen_tags, is_available, "order"
+    ) values ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, $10, $11)
+    returning *`,
+    [
+      randomUUID(),
+      category.id,
+      restaurant.id,
+      name,
+      body.description?.trim() || null,
+      Number(body.price),
+      body.image_url || null,
+      JSON.stringify(normalizeTagArray(body.dietary_tags)),
+      JSON.stringify(normalizeTagArray(body.allergen_tags)),
+      body.is_available ?? true,
+      body.order ?? 0,
+    ]
+  );
+
+  return NextResponse.json(result.rows[0], { status: 201 });
 }

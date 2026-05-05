@@ -1,9 +1,10 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, TrendingUp } from "lucide-react";
 import { MenuItem } from "@/src/types";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { toTagLabel } from "@/src/utils/menuTags";
 
 interface Props {
     item: MenuItem;
@@ -102,8 +103,35 @@ export function ItemCard({ item, categoryName, onDelete, onEdit, index }: Props)
                         <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
               {categoryName || "Uncategorized"}
             </span>
+                        {item.is_trending && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-600">
+                                <TrendingUp className="w-3 h-3" /> Trending
+                            </span>
+                        )}
+                        {item.is_best_seller && (
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                                ⭐ Best Seller
+                            </span>
+                        )}
+                        {item.is_new && (
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                                ✨ New
+                            </span>
+                        )}
                     </div>
                     <p className="text-slate-500 text-sm line-clamp-1">{item.description}</p>
+                    {!!item.dietary_tags?.length && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                            {item.dietary_tags.slice(0, 3).map((tag) => (
+                                <span
+                                    key={tag}
+                                    className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"
+                                >
+                                    {toTagLabel(tag, "dietary")}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Pricing & Hidden Actions (Revealed on Hover) */}

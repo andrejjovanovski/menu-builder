@@ -1,106 +1,62 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { CreateMenuCategoryInput } from '@/src/types'
+import { randomUUID } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { query } from "@/lib/db";
+import { getRestaurantBySlug } from "@/lib/repositories";
+import { requireAppSession } from "@/lib/server-auth";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await params
-  // First get restaurant
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll() { },
-      },
-    }
-  )
+  const { slug } = await params;
+  const restaurant = await getRestaurantBySlug(slug);
 
-  const { data: restaurant, error: restError } = await supabase
-    .from('restaurants')
-    .select('id')
-    .eq('slug', slug)
-    .single()
-
-  if (restError || !restaurant) {
-    return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+  if (!restaurant) {
+    return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
   }
 
-  const { data, error } = await supabase
-    .from('menu_categories')
-    .select('*')
-    .eq('restaurant_id', restaurant.id)
-    .order('order')
+  const result = await query(
+    'select * from menu_categories where restaurant_id = $1 order by "order" asc, created_at asc',
+    [restaurant.id]
+  );
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json(data)
+  return NextResponse.json(result.rows);
 }
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await params
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll() { },
-      },
-    }
-  )
-
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { error, session } = await requireAppSession();
+  if (error || !session) {
+    return error;
   }
 
-  const { data: restaurant, error: restError } = await supabase
-    .from('restaurants')
-    .select('id, owner_id')
-    .eq('slug', slug)
-    .single()
+  const { slug } = await params;
+  const restaurant = await getRestaurantBySlug(slug);
 
-  if (restError || !restaurant) {
-    return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 })
+  if (!restaurant) {
+    return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
   }
 
-  const isOwner = restaurant.owner_id === user.id
-  if (!isOwner) {
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Restaurant not found or access denied' }, { status: 404 })
-    }
+  if (session.role !== "admin" && restaurant.owner_id !== session.user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  try {
-    const body: Omit<CreateMenuCategoryInput, 'restaurant_id'> = await request.json()
+  const body = await request.json();
+  const name = String(body.name ?? "").trim();
+  const categorySlug = String(body.slug ?? "").trim();
 
-    const { data, error } = await supabase
-      .from('menu_categories')
-      .insert({ ...body, restaurant_id: restaurant.id })
-      .select()
-      .single()
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json(data, { status: 201 })
-  } catch (err) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  if (!name || !categorySlug) {
+    return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
   }
+
+  const result = await query(
+    `insert into menu_categories (id, restaurant_id, name, slug, "order")
+     values ($1, $2, $3, $4, $5)
+     returning *`,
+    [randomUUID(), restaurant.id, name, categorySlug, body.order ?? 0]
+  );
+
+  return NextResponse.json(result.rows[0], { status: 201 });
 }

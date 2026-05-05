@@ -20,21 +20,21 @@ export function Toast({ message, type, onClose }: ToastProps) {
     }, [onClose])
 
     const styles = {
-        success: "bg-emerald-600 shadow-emerald-200",
-        error: "bg-rose-600 shadow-rose-200"
+        success: "border-emerald-500/30 bg-emerald-500/15 text-emerald-700 shadow-emerald-500/10 dark:text-emerald-300",
+        error: "border-rose-500/30 bg-rose-500/15 text-rose-700 shadow-rose-500/10 dark:text-rose-300"
     }
 
     return (
-        <div className={`fixed bottom-8 right-8 z-100 flex items-center gap-3 px-6 py-4 rounded-[24px] text-white shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 ${styles[type]}`}>
+        <div className={`fixed bottom-8 right-8 z-100 flex items-center gap-3 rounded-[24px] border px-6 py-4 shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 ${styles[type]}`}>
             {type === 'success' ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-100" />
+                <CheckCircle2 className="w-5 h-5" />
             ) : (
-                <AlertCircle className="w-5 h-5 text-rose-100" />
+                <AlertCircle className="w-5 h-5" />
             )}
             <span className="font-bold text-sm tracking-tight">{message}</span>
             <button
                 onClick={onClose}
-                className="ml-2 p-1 hover:bg-white/20 rounded-full transition-colors"
+                className="ml-2 rounded-full p-1 transition-colors hover:bg-background/60"
             >
                 <X className="w-4 h-4" />
             </button>

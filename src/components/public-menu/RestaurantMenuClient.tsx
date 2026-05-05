@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import MenuHero from "@/src/components/public-menu/MenuHero";
 import MenuSection from "@/src/components/public-menu/MenuSection";
+import { AskRecommendationSheet } from "@/src/components/public-menu/AskRecommendationSheet";
+import { FeedbackPrompt } from "@/src/components/public-menu/FeedbackPrompt";
+import { CallWaiterSheet } from "@/src/components/public-menu/CallWaiterSheet";
+import PromotionPopup from "@/src/components/public-menu/PromotionPopup";
 import ProductBottomSheet, {
   type ProductBottomSheetItem,
 } from "@/src/components/public-menu/ProductBottomSheet";
-import { CircleEllipsis, Facebook, Instagram, Phone, X } from "lucide-react";
-import { MenuItem, MenuCategory, Restaurant } from "@/src/types";
+import { ChevronDown, CircleEllipsis, Facebook, Filter, Instagram, Phone, X } from "lucide-react";
+import { MenuItem, MenuCategory, Promotion, Restaurant } from "@/src/types";
+import { trackRestaurantEvent } from "@/src/utils/analytics";
+import { ALLERGEN_TAGS, DIETARY_TAGS } from "@/src/utils/menuTags";
 
 // TikTok icon (Lucide does not ship one) – minimal “note” shape
 function TiktokIcon({ size = 18 }: { size?: number }) {
@@ -35,22 +42,54 @@ interface CategoryWithItems extends MenuCategory {
 interface RestaurantMenuClientProps {
   categoriesWithItems: CategoryWithItems[];
   restaurant: Restaurant;
+  promotions?: Promotion[];
 }
 
 export default function RestaurantMenuClient({
   categoriesWithItems,
   restaurant,
+  promotions = [],
 }: RestaurantMenuClientProps) {
   const [isSocialOpen, setIsSocialOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProductBottomSheetItem | null>(null);
+  const [selectedDietaryTags, setSelectedDietaryTags] = useState<string[]>([]);
+  const [avoidedAllergenTags, setAvoidedAllergenTags] = useState<string[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const searchParams = useSearchParams();
+  const tableIdentifier = searchParams.get("table");
 
   const transformItems = (items: MenuItem[]) =>
     items.map((item) => ({
+      id: item.id,
       name: item.name,
       description: item.description || "",
-      price: `${item.price.toFixed(0)} ден.`,
+      price: `${Number(item.price).toFixed(0)} ден.`,
       image: item.image_url,
+      dietary_tags: item.dietary_tags || [],
+      allergen_tags: item.allergen_tags || [],
       is_available: item.is_available,
+      is_best_seller: item.is_best_seller,
+      is_new: item.is_new,
+      is_trending: item.is_trending,
+    }));
+
+  const popularItems = categoriesWithItems
+    .flatMap((c) => c.items)
+    .filter((item) => item.is_available && (item.is_best_seller || item.is_trending))
+    .slice(0, 6)
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description || "",
+      price: `${Number(item.price).toFixed(0)} ден.`,
+      image: item.image_url,
+      dietary_tags: item.dietary_tags || [],
+      allergen_tags: item.allergen_tags || [],
+      is_available: item.is_available,
+      is_best_seller: item.is_best_seller,
+      is_new: item.is_new,
+      is_trending: item.is_trending,
     }));
 
   const isVisualMode = restaurant.appearance === "visual";
@@ -94,6 +133,39 @@ export default function RestaurantMenuClient({
       : []),
   ];
 
+  const filteredCategories = useMemo(() => {
+    return categoriesWithItems
+      .map((category) => ({
+        ...category,
+        items: category.items.filter((item) => {
+          const itemDietaryTags = item.dietary_tags || [];
+          const itemAllergenTags = item.allergen_tags || [];
+
+          const matchesDietary = selectedDietaryTags.every((tag) =>
+            itemDietaryTags.includes(tag)
+          );
+          const avoidsAllergens = avoidedAllergenTags.every(
+            (tag) => !itemAllergenTags.includes(tag)
+          );
+
+          return matchesDietary && avoidsAllergens;
+        }),
+      }))
+      .filter((category) => category.items.length > 0);
+  }, [categoriesWithItems, selectedDietaryTags, avoidedAllergenTags]);
+
+  const hasActiveFilters =
+    selectedDietaryTags.length > 0 || avoidedAllergenTags.length > 0;
+  const activeFilterCount =
+    selectedDietaryTags.length + avoidedAllergenTags.length;
+
+  useEffect(() => {
+    void trackRestaurantEvent({
+      restaurantSlug: restaurant.slug,
+      eventType: "menu_view",
+    });
+  }, [restaurant.slug]);
+
   return (
     <div
       className="min-h-screen text-foreground transition-colors duration-500"
@@ -129,7 +201,29 @@ export default function RestaurantMenuClient({
         )}
       </AnimatePresence>
 
-      <ProductBottomSheet item={selectedItem} onClose={() => setSelectedItem(null)} />
+      <PromotionPopup promotions={promotions} restaurantId={restaurant.id} />
+
+      <ProductBottomSheet
+        item={selectedItem}
+        onClose={() => setSelectedItem(null)}
+        restaurantSlug={restaurant.slug}
+        onUpsellClick={(upsellItem) => setSelectedItem(upsellItem)}
+      />
+      {restaurant.recommendation_ai_enabled !== false && (
+        <AskRecommendationSheet
+          restaurantSlug={restaurant.slug}
+          restaurantName={restaurant.name}
+        />
+      )}
+      {restaurant.feedback_enabled !== false && (
+        <FeedbackPrompt restaurantSlug={restaurant.slug} />
+      )}
+      {restaurant.call_waiter_enabled && (
+        <CallWaiterSheet
+          restaurantSlug={restaurant.slug}
+          tableIdentifier={tableIdentifier}
+        />
+      )}
 
       {/* Floating Menu Container */}
       <div className="fixed bottom-6 left-5 z-40 flex flex-col items-start gap-4">
@@ -211,22 +305,185 @@ export default function RestaurantMenuClient({
           logoImage={restaurant.logo_url}
         />
 
-        {categoriesWithItems.length > 0 ? (
+        {restaurant.smart_highlights_enabled !== false && popularItems.length > 0 && (
+          <section className="mt-8">
+            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
+              Popular right now
+            </p>
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              {popularItems.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    if (restaurant.open_bottom_sheet_on_click !== false) {
+                      void trackRestaurantEvent({
+                        restaurantSlug: restaurant.slug,
+                        eventType: "item_open",
+                        itemId: item.id,
+                      });
+                      setSelectedItem(item);
+                    }
+                  }}
+                  className="shrink-0 w-32 rounded-2xl border border-accent/20 bg-[var(--card)]/70 overflow-hidden text-left hover:border-accent/50 transition-colors"
+                >
+                  {item.image ? (
+                    <div className="relative w-full aspect-square overflow-hidden">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full aspect-square bg-accent/10 flex items-center justify-center text-3xl">
+                      🍽️
+                    </div>
+                  )}
+                  <div className="p-2.5">
+                    <p className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">
+                      {item.name}
+                    </p>
+                    <p className="mt-1 text-xs font-bold text-[var(--accent)]">
+                      {item.price}
+                    </p>
+                    <div className="mt-1.5">
+                      {item.is_trending && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[9px] font-bold text-orange-300">
+                          🔥 Trending
+                        </span>
+                      )}
+                      {!item.is_trending && item.is_best_seller && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+                          ⭐ Best Seller
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {restaurant.menu_filters_enabled !== false && (
+        <section className="mt-8 rounded-[28px] border border-accent/15 bg-[var(--card)]/70 backdrop-blur-md overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsFilterOpen((prev) => !prev)}
+            className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Filter size={16} className="text-[var(--accent)]" />
+                <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+                  Filter the menu
+                </h3>
+                {hasActiveFilters && (
+                  <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-bold text-black">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {hasActiveFilters
+                  ? `${selectedDietaryTags.length} dietary and ${avoidedAllergenTags.length} allergen filter${activeFilterCount === 1 ? "" : "s"} active`
+                  : "Tap to show dietary and allergen filters"}
+              </p>
+            </div>
+
+            <motion.div
+              animate={{ rotate: isFilterOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="shrink-0 text-[var(--accent)]"
+            >
+              <ChevronDown size={18} />
+            </motion.div>
+          </button>
+
+          <AnimatePresence initial={false}>
+            {(isFilterOpen || hasActiveFilters) && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-4 border-t border-white/10 px-5 pb-5 pt-4">
+                  <FilterGroup
+                    title="Show only"
+                    options={DIETARY_TAGS}
+                    selected={selectedDietaryTags}
+                    onToggle={(value) =>
+                      setSelectedDietaryTags((prev) =>
+                        prev.includes(value)
+                          ? prev.filter((tag) => tag !== value)
+                          : [...prev, value]
+                      )
+                    }
+                  />
+                  <FilterGroup
+                    title="Avoid allergens"
+                    options={ALLERGEN_TAGS}
+                    selected={avoidedAllergenTags}
+                    onToggle={(value) =>
+                      setAvoidedAllergenTags((prev) =>
+                        prev.includes(value)
+                          ? prev.filter((tag) => tag !== value)
+                          : [...prev, value]
+                      )
+                    }
+                  />
+
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedDietaryTags([]);
+                        setAvoidedAllergenTags([]);
+                      }}
+                      className="text-sm font-medium text-[var(--accent)] hover:opacity-80"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+        )}
+
+        {filteredCategories.length > 0 ? (
           <div className="mt-8">
-            {categoriesWithItems.map((category, index) => (
+            {filteredCategories.map((category, index) => (
               <MenuSection
                 key={category.id}
                 title={category.name}
                 items={transformItems(category.items)}
                 delay={0.03 + index * 0.1}
                 defaultOpen={index === 0}
-                onItemWithImageClick={restaurant.open_bottom_sheet_on_click !== false ? setSelectedItem : undefined}
+                onItemWithImageClick={
+                  restaurant.open_bottom_sheet_on_click !== false
+                    ? (item) => {
+                        void trackRestaurantEvent({
+                          restaurantSlug: restaurant.slug,
+                          eventType: "item_open",
+                          itemId: item.id,
+                        });
+                        setSelectedItem(item);
+                      }
+                    : undefined
+                }
               />
             ))}
           </div>
         ) : (
           <p className="text-center text-muted-foreground mt-8">
-            No menu items available.
+            {hasActiveFilters
+              ? "No menu items match your current filters."
+              : "No menu items available."}
           </p>
         )}
 
@@ -237,7 +494,59 @@ export default function RestaurantMenuClient({
           <p className="text-muted-foreground/60 text-xs">
             {restaurant.footer_quote}
           </p>
+          {restaurant.show_branding !== false && (
+            <div className="mt-6">
+              <a
+                href="https://menucup.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+              >
+                Powered by
+                <span className="font-bold tracking-tight">MenuCup</span>
+              </a>
+            </div>
+          )}
         </footer>
+      </div>
+    </div>
+  );
+}
+
+function FilterGroup({
+  title,
+  options,
+  selected,
+  onToggle,
+}: {
+  title: string;
+  options: ReadonlyArray<{ value: string; label: string }>;
+  selected: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        {title}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const active = selected.includes(option.value);
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onToggle(option.value)}
+              className={`rounded-full border px-3 py-2 text-xs font-medium transition ${
+                active
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-black"
+                  : "border-white/10 bg-black/10 text-muted-foreground hover:border-[var(--accent)]/40 hover:text-foreground"
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -7,12 +7,13 @@ import { MenuItem, MenuCategory, Restaurant } from '@/src/types'
 interface EditItemModalProps {
     item: MenuItem | null
     categories: MenuCategory[]
+    restaurantItems: MenuItem[]
     selectedRestaurant: Restaurant
     onClose: () => void
     onUpdated: (updatedItem: MenuItem) => void
 }
 
-export function EditItemModal({ item, categories, selectedRestaurant, onClose, onUpdated }: EditItemModalProps) {
+export function EditItemModal({ item, categories, restaurantItems, selectedRestaurant, onClose, onUpdated }: EditItemModalProps) {
     if (!item) return null
 
     return (
@@ -25,6 +26,7 @@ export function EditItemModal({ item, categories, selectedRestaurant, onClose, o
             <EditItemForm
                 item={item}
                 categories={categories}
+                restaurantItems={restaurantItems}
                 selectedRestaurant={selectedRestaurant}
                 onCancel={onClose}
                 onUpdate={(updatedItem) => {
