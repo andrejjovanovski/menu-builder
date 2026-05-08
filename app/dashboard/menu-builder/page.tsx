@@ -1,8 +1,8 @@
 "use client";
 
 import type { Dispatch, SetStateAction } from "react";
-import { useEffect, useMemo, useState } from "react";
-import { FolderTree, Plus, Search, UtensilsCrossed } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FolderTree, Loader2, Plus, Search, UtensilsCrossed } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { DashboardShell } from "@/src/components/dashboard/DashboardShell";
 import { CategoryModal } from "@/src/components/menu-builder/CategoryModal";
@@ -17,12 +17,22 @@ import { Input } from "@/src/components/ui/input";
 import { Toast, ToastType } from "@/src/components/ui/Toast";
 import { MenuCategory, MenuItem, Restaurant } from "@/src/types";
 
+const ITEMS_PAGE_SIZE = 20;
+
+type ItemsPageResponse = {
+  items: MenuItem[];
+  total: number;
+  hasMore: boolean;
+};
+
 export default function MenuBuilderPage() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | string>("all");
   const [loadingMenu, setLoadingMenu] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -54,23 +64,27 @@ export default function MenuBuilderPage() {
           categories={categories}
           editingItem={editingItem}
           filteredItems={filteredItems}
+          hasMore={hasMore}
           items={items}
           isCatModalOpen={isCatModalOpen}
           isDeleting={isDeleting}
           isItemModalOpen={isItemModalOpen}
           itemToDelete={itemToDelete}
           loadingMenu={loadingMenu}
+          loadingMore={loadingMore}
           searchTerm={searchTerm}
           selectedRestaurant={selectedRestaurant!}
           setActiveFilter={setActiveFilter}
           setCategories={setCategories}
           setEditingItem={setEditingItem}
+          setHasMore={setHasMore}
           setIsCatModalOpen={setIsCatModalOpen}
           setIsDeleting={setIsDeleting}
           setIsItemModalOpen={setIsItemModalOpen}
           setItemToDelete={setItemToDelete}
           setItems={setItems}
           setLoadingMenu={setLoadingMenu}
+          setLoadingMore={setLoadingMore}
           setSearchTerm={setSearchTerm}
           setToast={setToast}
           showToast={showToast}
@@ -86,23 +100,27 @@ function MenuBuilderContent({
   categories,
   editingItem,
   filteredItems,
+  hasMore,
   items,
   isCatModalOpen,
   isDeleting,
   isItemModalOpen,
   itemToDelete,
   loadingMenu,
+  loadingMore,
   searchTerm,
   selectedRestaurant,
   setActiveFilter,
   setCategories,
   setEditingItem,
+  setHasMore,
   setIsCatModalOpen,
   setIsDeleting,
   setIsItemModalOpen,
   setItemToDelete,
   setItems,
   setLoadingMenu,
+  setLoadingMore,
   setSearchTerm,
   setToast,
   showToast,
@@ -112,50 +130,88 @@ function MenuBuilderContent({
   categories: MenuCategory[];
   editingItem: MenuItem | null;
   filteredItems: MenuItem[];
+  hasMore: boolean;
   items: MenuItem[];
   isCatModalOpen: boolean;
   isDeleting: boolean;
   isItemModalOpen: boolean;
   itemToDelete: MenuItem | null;
   loadingMenu: boolean;
+  loadingMore: boolean;
   searchTerm: string;
   selectedRestaurant: Restaurant;
   setActiveFilter: Dispatch<SetStateAction<"all" | string>>;
   setCategories: Dispatch<SetStateAction<MenuCategory[]>>;
   setEditingItem: Dispatch<SetStateAction<MenuItem | null>>;
+  setHasMore: Dispatch<SetStateAction<boolean>>;
   setIsCatModalOpen: Dispatch<SetStateAction<boolean>>;
   setIsDeleting: Dispatch<SetStateAction<boolean>>;
   setIsItemModalOpen: Dispatch<SetStateAction<boolean>>;
   setItemToDelete: Dispatch<SetStateAction<MenuItem | null>>;
   setItems: Dispatch<SetStateAction<MenuItem[]>>;
   setLoadingMenu: Dispatch<SetStateAction<boolean>>;
+  setLoadingMore: Dispatch<SetStateAction<boolean>>;
   setSearchTerm: Dispatch<SetStateAction<string>>;
   setToast: Dispatch<SetStateAction<{ message: string; type: ToastType } | null>>;
   showToast: (message: string, type?: ToastType) => void;
   toast: { message: string; type: ToastType } | null;
 }) {
+  const offsetRef = useRef(0);
+  const loadingMoreRef = useRef(false);
+  const hasMoreRef = useRef(false);
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreItemsRef = useRef<() => void>(() => {});
+  const loadMoreItems = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+
+    try {
+      const response = await apiFetch<ItemsPageResponse>(
+        `/api/restaurants/${selectedRestaurant.slug}/items?limit=${ITEMS_PAGE_SIZE}&offset=${offsetRef.current}`
+      );
+      const newItems = response?.items ?? [];
+      offsetRef.current += newItems.length;
+      hasMoreRef.current = Boolean(response?.hasMore);
+      setItems((current) => [...current, ...newItems]);
+      setHasMore(hasMoreRef.current);
+    } catch (error) {
+      console.error("Error loading more items:", error);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [selectedRestaurant.slug, setHasMore, setItems, setLoadingMore]);
+
+  useEffect(() => {
+    loadMoreItemsRef.current = loadMoreItems;
+  }, [loadMoreItems]);
+
   useEffect(() => {
     async function loadMenuData() {
       setLoadingMenu(true);
       setSearchTerm("");
       setActiveFilter("all");
+      offsetRef.current = 0;
+      hasMoreRef.current = false;
+      setHasMore(false);
 
       try {
-        const categoryData = await apiFetch<MenuCategory[]>(
-          `/api/restaurants/${selectedRestaurant.slug}/categories`
-        );
+        const [categoryData, itemsPage] = await Promise.all([
+          apiFetch<MenuCategory[]>(
+            `/api/restaurants/${selectedRestaurant.slug}/categories`
+          ),
+          apiFetch<ItemsPageResponse>(
+            `/api/restaurants/${selectedRestaurant.slug}/items?limit=${ITEMS_PAGE_SIZE}&offset=0`
+          ),
+        ]);
 
         setCategories(categoryData || []);
-
-        const itemResponses = await Promise.all(
-          (categoryData || []).map((category) =>
-            apiFetch<MenuItem[]>(
-              `/api/restaurants/${selectedRestaurant.slug}/categories/${category.slug}/items`
-            )
-          )
-        );
-
-        setItems(itemResponses.flat());
+        const initialItems = itemsPage?.items ?? [];
+        setItems(initialItems);
+        offsetRef.current = initialItems.length;
+        hasMoreRef.current = Boolean(itemsPage?.hasMore);
+        setHasMore(hasMoreRef.current);
       } catch (error) {
         console.error("Error loading menu data:", error);
         setCategories([]);
@@ -166,7 +222,32 @@ function MenuBuilderContent({
     }
 
     void loadMenuData();
-  }, [selectedRestaurant, setActiveFilter, setCategories, setItems, setLoadingMenu, setSearchTerm]);
+  }, [
+    selectedRestaurant,
+    setActiveFilter,
+    setCategories,
+    setHasMore,
+    setItems,
+    setLoadingMenu,
+    setSearchTerm,
+  ]);
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          loadMoreItemsRef.current();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadingMenu, hasMore]);
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete) {
@@ -313,8 +394,9 @@ function MenuBuilderContent({
           </CardHeader>
           <CardContent>
             {loadingMenu ? (
-              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-12 text-center text-sm text-muted-foreground">
-                Loading menu items...
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 p-12 text-sm text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span>Loading menu items...</span>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4">
@@ -337,6 +419,19 @@ function MenuBuilderContent({
                   <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     No items found
                   </p>
+                </div>
+              )}
+              {hasMore && (
+                <div
+                  ref={loadMoreSentinelRef}
+                  className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground"
+                >
+                  {loadingMore && (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      <span>Loading more...</span>
+                    </>
+                  )}
                 </div>
               )}
             </div>

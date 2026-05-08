@@ -29,6 +29,25 @@ export async function getRestaurantItems(restaurantId: string) {
   return result.rows;
 }
 
+export async function getRestaurantItemsPaginated(
+  restaurantId: string,
+  { limit, offset }: { limit: number; offset: number }
+) {
+  const result = await query(
+    'select * from menu_items where restaurant_id = $1 order by "order" asc, created_at asc limit $2 offset $3',
+    [restaurantId, limit, offset]
+  );
+  return result.rows;
+}
+
+export async function getRestaurantItemsCount(restaurantId: string) {
+  const result = await query(
+    "select count(*)::int as count from menu_items where restaurant_id = $1",
+    [restaurantId]
+  );
+  return result.rows[0]?.count ?? 0;
+}
+
 export async function getCategoryBySlug(restaurantId: string, slug: string) {
   const result = await query(
     "select * from menu_categories where restaurant_id = $1 and slug = $2 limit 1",

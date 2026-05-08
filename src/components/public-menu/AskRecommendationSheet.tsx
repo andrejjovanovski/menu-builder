@@ -138,7 +138,7 @@ export function AskRecommendationSheet({
                   value={question}
                   onChange={(event) => setQuestion(event.target.value)}
                   placeholder="Ask something like: What should I get if I want something spicy and not too heavy?"
-                  className="min-h-[110px] w-full rounded-2xl border border-white/10 bg-black/10 px-4 py-3 text-sm outline-none transition placeholder:text-muted-foreground/70 focus:border-accent/50"
+                  className="min-h-[110px] w-full rounded-2xl border border-white/10 bg-black/10 px-4 py-3 text-sm text-foreground caret-foreground outline-none transition placeholder:text-muted-foreground/70 focus:border-accent/50"
                 />
                 <button
                   type="submit"

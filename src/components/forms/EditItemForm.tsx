@@ -431,16 +431,26 @@ export function EditItemForm({ item, categories, restaurantItems, selectedRestau
                 <button
                     type="button"
                     onClick={onCancel}
-                    className="flex-1 py-4 bg-slate-100 text-slate-900 font-bold rounded-2xl hover:bg-slate-200 transition-all"
+                    disabled={loading || isUploading}
+                    className="flex-1 py-4 bg-slate-100 text-slate-900 font-bold rounded-2xl hover:bg-slate-200 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-slate-100"
                 >
                     Cancel
                 </button>
                 <button
                     type="submit"
                     disabled={loading || isUploading}
-                    className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-indigo-600"
                 >
-                    {loading || isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Changes</>}
+                    {loading || isUploading ? (
+                        <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>Saving...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Save className="w-5 h-5" /> Save Changes
+                        </>
+                    )}
                 </button>
             </div>
         </form>

@@ -52,21 +52,17 @@ export function useMenuBuilder() {
         setActiveFilter("all");
 
         try {
-            const catData = await apiFetch<MenuCategory[]>(
-                `/api/restaurants/${restaurant.slug}/categories`
-            );
+            const [catData, itemsResponse] = await Promise.all([
+                apiFetch<MenuCategory[]>(
+                    `/api/restaurants/${restaurant.slug}/categories`
+                ),
+                apiFetch<{ items: MenuItem[]; total: number; hasMore: boolean }>(
+                    `/api/restaurants/${restaurant.slug}/items`
+                ),
+            ]);
 
             setCategories(catData || []);
-
-            const itemResponses = await Promise.all(
-                (catData || []).map((category) =>
-                    apiFetch<MenuItem[]>(
-                        `/api/restaurants/${restaurant.slug}/categories/${category.slug}/items`
-                    )
-                )
-            );
-
-            setItems(itemResponses.flat());
+            setItems(itemsResponse?.items ?? []);
         } catch (error) {
             console.error("Error loading restaurant data:", error);
         }

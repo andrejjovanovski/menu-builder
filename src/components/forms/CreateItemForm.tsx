@@ -179,9 +179,16 @@ export function CreateItemForm({ categories, selectedRestaurant, onCreate }: Cre
             <button
                 type="submit"
                 disabled={isUploading}
-                className="w-full py-4 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2"
+                className="w-full py-4 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-emerald-600"
             >
-                {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Add to Menu'}
+                {isUploading ? (
+                    <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Adding...</span>
+                    </>
+                ) : (
+                    'Add to Menu'
+                )}
             </button>
         </form>
     )

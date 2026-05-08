@@ -19,23 +19,23 @@ export function ItemModal({ categories, selectedRestaurant, onClose, onItemCreat
                 onClick={onClose}
             />
 
-            <div className="relative bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="p-8">
-                    <div className="flex justify-between items-center mb-8">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-emerald-100 p-2 rounded-xl">
-                                <UtensilsCrossed className="w-6 h-6 text-emerald-600" />
-                            </div>
-                            <div>
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Add New Item</h3>
-                                <p className="text-slate-500 text-sm font-medium">Add a dish to {selectedRestaurant.name}</p>
-                            </div>
+            <div className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-[40px] bg-white shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="flex shrink-0 items-center justify-between p-8 pb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-emerald-100 p-2 rounded-xl">
+                            <UtensilsCrossed className="w-6 h-6 text-emerald-600" />
                         </div>
-                        <button onClick={onClose} className="p-3 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
-                            <X className="w-6 h-6" />
-                        </button>
+                        <div>
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Add New Item</h3>
+                            <p className="text-slate-500 text-sm font-medium">Add a dish to {selectedRestaurant.name}</p>
+                        </div>
                     </div>
+                    <button onClick={onClose} className="p-3 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
 
+                <div className="overflow-y-auto px-8 pb-8">
                     <CreateItemForm
                         categories={categories}
                         selectedRestaurant={selectedRestaurant}

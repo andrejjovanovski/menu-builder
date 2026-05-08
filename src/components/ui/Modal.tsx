@@ -33,10 +33,10 @@ export function Modal({ isOpen, onClose, title, description, children }: ModalPr
             />
 
             {/* 2. Modal Container */}
-            <div className="relative w-full max-w-xl overflow-hidden rounded-[40px] border border-border bg-card text-card-foreground shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-[40px] border border-border bg-card text-card-foreground shadow-2xl animate-in zoom-in-95 duration-200">
 
                 {/* Header Section */}
-                <div className="p-8 pb-0 flex justify-between items-start">
+                <div className="flex shrink-0 items-start justify-between p-8 pb-0">
                     <div>
                         <h3 className="text-2xl font-black tracking-tight">
                             {title}
@@ -56,7 +56,7 @@ export function Modal({ isOpen, onClose, title, description, children }: ModalPr
                 </div>
 
                 {/* 3. Content Area */}
-                <div className="p-8 pt-6">
+                <div className="overflow-y-auto p-8 pt-6">
                     {children}
                 </div>
             </div>

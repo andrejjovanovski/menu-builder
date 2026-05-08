@@ -108,23 +108,26 @@ export function CategoryModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-slate-900/40 animate-in fade-in duration-200">
-            <div className="relative bg-white w-full max-w-lg rounded-[32px] shadow-2xl p-8 overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="flex justify-between items-center mb-8">
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">Manage Categories</h3>
+            <div className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-lg flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="flex shrink-0 items-center justify-between p-6 pb-4 sm:p-8 sm:pb-6">
+                    <h3 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">Manage Categories</h3>
                     <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
 
-                <CreateCategoryForm
-                    categories={categories}
-                    selectedRestaurant={selectedRestaurant}
-                    onCreate={onCategoryCreated}
-                />
+                <div className="flex min-h-0 flex-1 flex-col px-6 pb-6 sm:px-8 sm:pb-8">
+                    <div className="shrink-0">
+                        <CreateCategoryForm
+                            categories={categories}
+                            selectedRestaurant={selectedRestaurant}
+                            onCreate={onCategoryCreated}
+                        />
+                    </div>
 
-                <div className="mt-8 space-y-2">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Existing Categories</p>
-                    <div className="max-h-60 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-slate-200">
+                    <div className="mt-8 flex min-h-0 flex-1 flex-col">
+                        <p className="shrink-0 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Existing Categories</p>
+                        <div className="max-h-60 space-y-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
                         {categories.map((cat, index) => (
                             <div
                                 key={cat.id}
@@ -134,7 +137,7 @@ export function CategoryModal({
                                 onDragLeave={handleDragLeave}
                                 onDrop={(e) => handleDrop(e, index)}
                                 onDragEnd={handleDragEnd}
-                                className={`flex items-center justify-between p-4 bg-slate-50 rounded-2xl border transition-all ${draggedIndex === index
+                                className={`flex items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-2xl border transition-all ${draggedIndex === index
                                         ? 'opacity-50 border-slate-300'
                                         : dragOverIndex === index
                                             ? 'border-indigo-500 bg-indigo-50'
@@ -168,7 +171,7 @@ export function CategoryModal({
                                             <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition-colors">
                                                 <GripVertical className="w-5 h-5" />
                                             </div>
-                                            <span className="font-bold text-slate-700">{cat.name}</span>
+                                            <span className="text-sm sm:text-base font-bold text-slate-700">{cat.name}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button onClick={() => handleEditClick(cat)} className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-indigo-600 transition-colors">
@@ -182,6 +185,7 @@ export function CategoryModal({
                                 )}
                             </div>
                         ))}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -17,9 +17,9 @@ interface Props {
 export function ItemCard({ item, categoryName, onDelete, onEdit, index }: Props) {
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 * index }}
+            transition={{ duration: 0.2, delay: Math.min(index, 5) * 0.03 }}
             className="group bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl p-3 sm:p-4 hover:bg-white hover:border-indigo-300 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10"
         >
             {/* Mobile Layout */}
@@ -89,6 +89,7 @@ export function ItemCard({ item, categoryName, onDelete, onEdit, index }: Props)
                             src={item.image_url}
                             alt={item.name}
                             fill
+                            sizes="80px"
                             className="object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                     ) : (

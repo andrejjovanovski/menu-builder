@@ -98,6 +98,19 @@
   border-color: var(--border);
 }
 
+input,
+textarea,
+select {
+  color: inherit;
+  caret-color: currentColor;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+
 html {
   color-scheme: light;
 }
