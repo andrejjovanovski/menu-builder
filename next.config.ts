@@ -30,6 +30,7 @@ function getRemotePatterns(): NonNullable<NextConfig["images"]>["remotePatterns"
 
 const nextConfig: NextConfig = {
   images: {
+      unoptimized: true,
       remotePatterns: getRemotePatterns(),
   },
 };
