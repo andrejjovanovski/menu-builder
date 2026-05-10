@@ -1,10 +1,16 @@
-
 'use client'
 
-import { X, Edit3, Trash2, Check, XCircle, GripVertical } from 'lucide-react'
-import React, { useState } from 'react'
+import { X, Edit3, Trash2, Check, XCircle, GripVertical, Image as ImageIcon, Loader2 } from 'lucide-react'
+import React, { useRef, useState } from 'react'
 import { MenuCategory, Restaurant } from '@/src/types'
+import { uploadAsset } from '@/src/utils/uploads'
 import { CreateCategoryForm } from '../forms/CreateCategoryForm'
+
+export type CategoryUpdatePatch = {
+    name?: string
+    image_url?: string | null
+    description?: string | null
+}
 
 interface CategoryModalProps {
     categories: MenuCategory[]
@@ -12,7 +18,7 @@ interface CategoryModalProps {
     onClose: () => void
     onDeleteCategory: (id: string) => void
     onCategoryCreated: (cat: MenuCategory) => void
-    onCategoryUpdate: (id: string, name: string) => void
+    onCategoryUpdate: (id: string, patch: CategoryUpdatePatch) => Promise<void> | void
     onCategoryReorder: (reorderedCategories: MenuCategory[]) => void
 }
 
@@ -27,40 +33,15 @@ export function CategoryModal({
 }: CategoryModalProps) {
 
     const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-    const [editedCategoryName, setEditedCategoryName] = useState<string>('');
     const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
     const handleEditClick = (cat: MenuCategory) => {
         setEditingCategoryId(cat.id);
-        setEditedCategoryName(cat.name);
     };
 
     const handleCancelEdit = () => {
         setEditingCategoryId(null);
-        setEditedCategoryName('');
-    };
-
-    const handleSaveEdit = () => {
-        if (editingCategoryId && editedCategoryName.trim()) {
-            onCategoryUpdate(editingCategoryId, editedCategoryName.trim());
-            setEditingCategoryId(null);
-            setEditedCategoryName('');
-        } else if (editingCategoryId) {
-            handleCancelEdit();
-        }
-    };
-
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setEditedCategoryName(e.target.value);
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            handleSaveEdit();
-        } else if (e.key === 'Escape') {
-            handleCancelEdit();
-        }
     };
 
     // Drag and Drop handlers
@@ -90,7 +71,6 @@ export function CategoryModal({
         const [draggedItem] = reordered.splice(draggedIndex, 1);
         reordered.splice(dropIndex, 0, draggedItem);
 
-        // Update order values
         const updatedCategories = reordered.map((cat, idx) => ({
             ...cat,
             order: idx
@@ -127,68 +107,210 @@ export function CategoryModal({
 
                     <div className="mt-8 flex min-h-0 flex-1 flex-col">
                         <p className="shrink-0 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Existing Categories</p>
-                        <div className="max-h-60 space-y-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
-                        {categories.map((cat, index) => (
-                            <div
-                                key={cat.id}
-                                draggable={editingCategoryId !== cat.id}
-                                onDragStart={() => handleDragStart(index)}
-                                onDragOver={(e) => handleDragOver(e, index)}
-                                onDragLeave={handleDragLeave}
-                                onDrop={(e) => handleDrop(e, index)}
-                                onDragEnd={handleDragEnd}
-                                className={`flex items-center justify-between p-3 sm:p-4 bg-slate-50 rounded-2xl border transition-all ${draggedIndex === index
-                                        ? 'opacity-50 border-slate-300'
-                                        : dragOverIndex === index
-                                            ? 'border-indigo-500 bg-indigo-50'
-                                            : 'border-slate-100'
-                                    } group`}
-                            >
-                                {editingCategoryId === cat.id ? (
-                                    // Input field for editing
-                                    <>
-                                        <input
-                                            type="text"
-                                            value={editedCategoryName}
-                                            onChange={handleNameChange}
-                                            onKeyDown={handleKeyDown}
-                                            className="flex-grow p-2 mr-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                                            autoFocus
-                                        />
-                                        <div className="flex items-center gap-1">
-                                            <button onClick={handleSaveEdit} className="p-2 hover:bg-white rounded-xl text-green-600 hover:text-green-800 transition-colors">
-                                                <Check className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={handleCancelEdit} className="p-2 hover:bg-white rounded-xl text-red-400 hover:text-red-600 transition-colors">
-                                                <XCircle className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    // Display category name and edit/delete buttons
-                                    <>
-                                        <div className="flex items-center gap-3 flex-grow">
-                                            <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition-colors">
-                                                <GripVertical className="w-5 h-5" />
+                        <div className="space-y-2 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
+                            {categories.map((cat, index) => {
+                                const isEditing = editingCategoryId === cat.id;
+                                return (
+                                    <div
+                                        key={cat.id}
+                                        draggable={!isEditing}
+                                        onDragStart={() => handleDragStart(index)}
+                                        onDragOver={(e) => handleDragOver(e, index)}
+                                        onDragLeave={handleDragLeave}
+                                        onDrop={(e) => handleDrop(e, index)}
+                                        onDragEnd={handleDragEnd}
+                                        className={`rounded-2xl border transition-all ${draggedIndex === index
+                                            ? 'opacity-50 border-slate-300'
+                                            : dragOverIndex === index
+                                                ? 'border-indigo-500 bg-indigo-50'
+                                                : 'border-slate-100 bg-slate-50'
+                                            }`}
+                                    >
+                                        {isEditing ? (
+                                            <CategoryEditor
+                                                category={cat}
+                                                restaurantId={selectedRestaurant.id}
+                                                onSave={async (patch) => {
+                                                    await onCategoryUpdate(cat.id, patch);
+                                                    setEditingCategoryId(null);
+                                                }}
+                                                onCancel={handleCancelEdit}
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-between gap-3 p-3 sm:p-4">
+                                                <div className="flex min-w-0 items-center gap-3 flex-grow">
+                                                    <div className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition-colors">
+                                                        <GripVertical className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-slate-200">
+                                                        {cat.image_url ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img
+                                                                src={cat.image_url}
+                                                                alt={cat.name}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-full w-full items-center justify-center text-slate-400">
+                                                                <ImageIcon className="h-5 w-5" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="truncate text-sm sm:text-base font-bold text-slate-700">{cat.name}</p>
+                                                        {cat.description && (
+                                                            <p className="truncate text-xs text-slate-500">{cat.description}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <button onClick={() => handleEditClick(cat)} className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-indigo-600 transition-colors">
+                                                        <Edit3 className="w-4 h-4" />
+                                                    </button>
+                                                    <button onClick={() => onDeleteCategory(cat.id)} className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-rose-600 transition-colors">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <span className="text-sm sm:text-base font-bold text-slate-700">{cat.name}</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <button onClick={() => handleEditClick(cat)} className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-indigo-600 transition-colors">
-                                                <Edit3 className="w-4 h-4" />
-                                            </button>
-                                            <button onClick={() => onDeleteCategory(cat.id)} className="p-2 hover:bg-white rounded-xl text-slate-400 hover:text-rose-600 transition-colors">
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        ))}
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     )
+}
+
+function CategoryEditor({
+    category,
+    restaurantId,
+    onSave,
+    onCancel,
+}: {
+    category: MenuCategory;
+    restaurantId: string;
+    onSave: (patch: CategoryUpdatePatch) => Promise<void>;
+    onCancel: () => void;
+}) {
+    const [name, setName] = useState(category.name);
+    const [description, setDescription] = useState(category.description ?? "");
+    const [imageUrl, setImageUrl] = useState<string | null>(category.image_url ?? null);
+    const [uploading, setUploading] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFile = async (file: File | undefined) => {
+        if (!file) return;
+        setUploading(true);
+        try {
+            const url = await uploadAsset(file, `restaurant-assets/${restaurantId}/categories`);
+            setImageUrl(url);
+        } catch (error) {
+            console.error("Category image upload failed", error);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleSave = async () => {
+        if (!name.trim()) return;
+        setSaving(true);
+        try {
+            await onSave({
+                name: name.trim(),
+                description: description.trim() ? description.trim() : null,
+                image_url: imageUrl,
+            });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <div className="space-y-3 p-4">
+            <div className="flex items-start gap-3">
+                <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-dashed border-slate-300 bg-white transition hover:border-indigo-400"
+                >
+                    {imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-slate-400">
+                            <ImageIcon className="h-5 w-5" />
+                            <span className="text-[10px] font-semibold uppercase tracking-widest">Image</span>
+                        </div>
+                    )}
+                    {uploading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+                            <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+                        </div>
+                    )}
+                </button>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => void handleFile(event.target.files?.[0])}
+                />
+                <div className="flex-1 space-y-2">
+                    <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Category name"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-indigo-500"
+                    />
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Optional description (one short line)"
+                        rows={2}
+                        className="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-indigo-500"
+                    />
+                </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2">
+                {imageUrl && (
+                    <button
+                        type="button"
+                        onClick={() => setImageUrl(null)}
+                        disabled={saving || uploading}
+                        className="rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-50"
+                    >
+                        Remove image
+                    </button>
+                )}
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    disabled={saving}
+                    className="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-white disabled:opacity-50"
+                >
+                    <XCircle className="inline h-3.5 w-3.5 mr-1" />
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving || uploading || !name.trim()}
+                    className="rounded-xl bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                    {saving ? (
+                        <Loader2 className="inline h-3.5 w-3.5 mr-1 animate-spin" />
+                    ) : (
+                        <Check className="inline h-3.5 w-3.5 mr-1" />
+                    )}
+                    Save
+                </button>
+            </div>
+        </div>
+    );
 }

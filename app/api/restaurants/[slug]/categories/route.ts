@@ -51,11 +51,20 @@ export async function POST(
     return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
   }
 
+  const imageUrl =
+    typeof body.image_url === "string" && body.image_url.trim().length > 0
+      ? body.image_url.trim()
+      : null;
+  const description =
+    typeof body.description === "string" && body.description.trim().length > 0
+      ? body.description.trim()
+      : null;
+
   const result = await query(
-    `insert into menu_categories (id, restaurant_id, name, slug, "order")
-     values ($1, $2, $3, $4, $5)
+    `insert into menu_categories (id, restaurant_id, name, slug, image_url, description, "order")
+     values ($1, $2, $3, $4, $5, $6, $7)
      returning *`,
-    [randomUUID(), restaurant.id, name, categorySlug, body.order ?? 0]
+    [randomUUID(), restaurant.id, name, categorySlug, imageUrl, description, body.order ?? 0]
   );
 
   return NextResponse.json(result.rows[0], { status: 201 });

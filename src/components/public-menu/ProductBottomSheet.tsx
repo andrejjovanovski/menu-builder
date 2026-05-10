@@ -93,6 +93,19 @@ export default function ProductBottomSheet({
     return () => { cancelled = true; };
   }, [item?.id, restaurantSlug]);
 
+  // Lock body scroll while the sheet is open so the page beneath doesn't move.
+  useEffect(() => {
+    if (!item) return;
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [item]);
+
   // Track upsell impression once upsells are visible
   useEffect(() => {
     if (upsells.length > 0 && item && !upsellsTracked) {
@@ -179,10 +192,10 @@ export default function ProductBottomSheet({
 
               <div className="p-5 pb-8">
                 <div className="flex items-start justify-between gap-4 mb-2">
-                  <h2 className="font-display text-xl md:text-2xl text-foreground">
+                  <h2 className="menu-font-display text-xl md:text-2xl text-foreground">
                     {item.name}
                   </h2>
-                  <span className="shrink-0 font-sans text-lg font-semibold text-[var(--accent)]">
+                  <span className="shrink-0 menu-font-body text-lg font-semibold text-[var(--accent)]">
                     {item.price}
                   </span>
                 </div>

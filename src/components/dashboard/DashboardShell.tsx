@@ -6,7 +6,9 @@ import {
   BellRing,
   Building2,
   CreditCard,
+  type LucideIcon,
   Megaphone,
+  Palette,
   QrCode,
   Settings,
   Store,
@@ -14,22 +16,40 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { MenuSidebar } from "@/src/components/menu-builder/MenuSidebar";
-import { useDashboardRestaurants } from "@/hooks/useDashboardRestaurants";
+import { useDashboard } from "@/src/components/dashboard/DashboardProvider";
 import { Badge } from "@/src/components/ui/badge";
 import { Card, CardContent } from "@/src/components/ui/card";
 import { ThemeToggle } from "@/src/components/ui/theme-toggle";
 
-type SectionKey = "menu-builder" | "analytics" | "settings" | "qr" | "payments" | "requests" | "promotions";
+const SECTION_LABELS: Record<string, string> = {
+  "menu-builder": "menu builder",
+  analytics: "analytics",
+  settings: "settings",
+  qr: "qr",
+  payments: "payments",
+  requests: "requests",
+  promotions: "promotions",
+  "theme-studio": "theme studio",
+};
 
-interface DashboardShellProps {
-  section: SectionKey;
-  children: (context: ReturnType<typeof useDashboardRestaurants>) => ReactNode;
+// Sections that are admin-wide and don't operate on a single restaurant.
+// They render without the restaurant header and don't require a selection.
+const GLOBAL_SECTION_SLUGS = new Set(["payments"]);
+
+function deriveSection(pathname: string): { label: string; slug: string } {
+  // /dashboard/<section>[/...] → "<section>"
+  const parts = pathname.split("/").filter(Boolean);
+  const idx = parts.indexOf("dashboard");
+  const slug = idx >= 0 ? parts[idx + 1] ?? "" : "";
+  return { label: SECTION_LABELS[slug] ?? "dashboard", slug };
 }
 
-export function DashboardShell({ section, children }: DashboardShellProps) {
+export function DashboardShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const dashboard = useDashboardRestaurants();
+  const dashboard = useDashboard();
+  const { label: sectionLabel, slug: sectionSlug } = deriveSection(pathname);
+  const isGlobalSection = GLOBAL_SECTION_SLUGS.has(sectionSlug);
 
   useEffect(() => {
     if (!dashboard.loading && !dashboard.user) {
@@ -38,7 +58,13 @@ export function DashboardShell({ section, children }: DashboardShellProps) {
   }, [dashboard.loading, dashboard.user, router]);
 
   const navigationItems = useMemo(() => {
-    const items = [
+    type NavItem = {
+      href: string;
+      icon: LucideIcon;
+      label: string;
+      adminOnly?: boolean;
+    };
+    const items: NavItem[] = [
       {
         href: dashboard.buildSectionHref("/dashboard/menu-builder"),
         icon: Utensils,
@@ -48,6 +74,11 @@ export function DashboardShell({ section, children }: DashboardShellProps) {
         href: dashboard.buildSectionHref("/dashboard/analytics"),
         icon: BarChart3,
         label: "Analytics",
+      },
+      {
+        href: dashboard.buildSectionHref("/dashboard/theme-studio"),
+        icon: Palette,
+        label: "Theme Studio",
       },
       {
         href: dashboard.buildSectionHref("/dashboard/settings"),
@@ -76,6 +107,7 @@ export function DashboardShell({ section, children }: DashboardShellProps) {
         href: dashboard.buildSectionHref("/dashboard/payments"),
         icon: CreditCard,
         label: "Payments",
+        adminOnly: true,
       });
     }
 
@@ -105,7 +137,7 @@ export function DashboardShell({ section, children }: DashboardShellProps) {
       />
 
       <main className="min-w-0 flex-1 overflow-y-auto bg-background text-foreground">
-        {!dashboard.selectedRestaurant ? (
+        {!isGlobalSection && !dashboard.selectedRestaurant ? (
           <div className="flex h-full items-center justify-center p-12 text-center">
             <Card className="max-w-md border-border/70 bg-card/80 backdrop-blur">
               <CardContent className="p-8">
@@ -130,22 +162,38 @@ export function DashboardShell({ section, children }: DashboardShellProps) {
                         Dashboard
                       </Badge>
                       <Badge variant="outline" className="capitalize">
-                        {section.replace("-", " ")}
+                        {sectionLabel}
                       </Badge>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                        <Building2 className="h-5 w-5" />
+                    {isGlobalSection ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h1 className="text-2xl font-semibold tracking-tight capitalize">
+                            {sectionLabel}
+                          </h1>
+                          <p className="text-sm text-muted-foreground">
+                            Admin workspace across all restaurants
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                          {dashboard.selectedRestaurant.name}
-                        </h1>
-                        <p className="text-sm text-muted-foreground">
-                          Active workspace for `{dashboard.selectedRestaurant.slug}`
-                        </p>
+                    ) : dashboard.selectedRestaurant ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h1 className="text-2xl font-semibold tracking-tight">
+                            {dashboard.selectedRestaurant.name}
+                          </h1>
+                          <p className="text-sm text-muted-foreground">
+                            Active workspace for `{dashboard.selectedRestaurant.slug}`
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -154,7 +202,7 @@ export function DashboardShell({ section, children }: DashboardShellProps) {
                 </CardContent>
               </Card>
 
-              {children(dashboard)}
+              {children}
             </div>
           </div>
         )}

@@ -8,6 +8,7 @@ import {
 } from '@/lib/repositories'
 import { MenuCategory, MenuItem, Promotion, Restaurant } from '@/src/types'
 import RestaurantMenuClient from '@/src/components/public-menu/RestaurantMenuClient'
+import { ALL_FONTS_CLASS } from '@/src/utils/theme-fonts'
 
 interface CategoryWithItems extends MenuCategory {
   items: MenuItem[]
@@ -33,13 +34,15 @@ export default async function RestaurantPage({ params }: { params: Promise<{ res
   }))
 
   return (
-    <Suspense>
-      <RestaurantMenuClient
-        categoriesWithItems={categoriesWithItems}
-        restaurant={restaurant}
-        promotions={promotions || []}
-      />
-    </Suspense>
+    <div className={ALL_FONTS_CLASS}>
+      <Suspense>
+        <RestaurantMenuClient
+          categoriesWithItems={categoriesWithItems}
+          restaurant={restaurant}
+          promotions={promotions || []}
+        />
+      </Suspense>
+    </div>
   )
 }
 

@@ -59,30 +59,55 @@
     }
   },
   "Pricing": {
-    "title": "Flexible Billing",
-    "subtitle": "Choose the billing cycle that fits your business model.",
-    "monthly": {
-      "label": "Monthly Pay",
-      "price": "$11.50",
-      "priceNote": "per month / billed monthly",
+    "title": "Plans that grow with you",
+    "subtitle": "Start with the essentials, scale to a full sales engine when you're ready.",
+    "billed": "billed monthly",
+    "basic": {
+      "label": "Basic",
+      "price": "$5.70",
+      "priceNote": "approx. 300 MKD / month",
+      "tagline": "Get your menu live with everything cafés need to start.",
       "features": {
-        "featOne": "No long-term commitment",
-        "featTwo": "Full feature access",
-        "featThree": "Cancel anytime"
+        "featOne": "1 digital menu + QR code",
+        "featTwo": "Unlimited categories & items",
+        "featThree": "Image uploads & multi-language",
+        "featFour": "Menu filters for easier browsing",
+        "featFive": "Custom branding, phone & social links",
+        "featSix": "MenuCup branding shown"
       },
-      "cta": "Get Started"
+      "cta": "Start with Basic"
     },
-    "yearly": {
-      "badge": "Best Value",
-      "label": "Yearly Pay",
-      "price": "$9.50",
-      "priceNote": "Billed as $114.00 / year",
+    "pro": {
+      "badge": "Most Popular",
+      "label": "Pro",
+      "price": "$11.40",
+      "priceNote": "approx. 600 MKD / month",
+      "tagline": "Sell more — smart highlights, upselling, and analytics that pay for themselves.",
+      "everythingIn": "Everything in Basic, plus:",
       "features": {
-        "featOne": "Save 16% annually",
-        "featTwo": "Priority 24/7 support",
-        "featThree": "Custom QR branding"
+        "featOne": "Smart highlights (Trending, Best Seller, New)",
+        "featTwo": "Upselling system at item view",
+        "featThree": "Advanced per-item analytics",
+        "featFour": "Call Waiter & per-table QR codes",
+        "featFive": "Promotions / popups",
+        "featSix": "MenuCup branding removed"
       },
-      "cta": "Get Annual Plan"
+      "cta": "Upgrade to Pro"
+    },
+    "business": {
+      "label": "Business",
+      "price": "$20.90",
+      "priceNote": "approx. 1,100 MKD / month",
+      "tagline": "AI-driven recommendations and a Menu Performance Score that tells you exactly what to fix.",
+      "everythingIn": "Everything in Pro, plus:",
+      "features": {
+        "featOne": "AI actionable insights for owners",
+        "featTwo": "Menu Performance Score (0–100)",
+        "featThree": "Time-of-day & cohort analytics",
+        "featFour": "Priority support",
+        "featFive": "Early access to new features"
+      },
+      "cta": "Talk to Sales"
     }
   },
   "Contact": {

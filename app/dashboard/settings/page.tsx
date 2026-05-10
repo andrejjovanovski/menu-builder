@@ -1,13 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { Palette, Settings, Share2, SlidersHorizontal } from "lucide-react";
-import { DashboardShell } from "@/src/components/dashboard/DashboardShell";
-import { RestaurantSettingsModal } from "@/src/components/menu-builder/RestaurantSettingsModal";
+import { useDashboard } from "@/src/components/dashboard/DashboardProvider";
+import { RestaurantSettingsForm } from "@/src/components/menu-builder/RestaurantSettingsForm";
 import { Badge } from "@/src/components/ui/badge";
-import { Button } from "@/src/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+} from "@/src/components/ui/card";
 import { Toast, ToastType } from "@/src/components/ui/Toast";
 import { uploadAsset } from "@/src/utils/uploads";
 import { Restaurant, RestaurantSettings as RestaurantSettingsType, UserRole } from "@/src/types";
@@ -21,7 +22,6 @@ function SettingsContent({
   selectedRestaurant: Restaurant;
   userRole: UserRole;
 }) {
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   const initialSettings = useMemo(
@@ -46,6 +46,7 @@ function SettingsContent({
       feedbackEnabled: selectedRestaurant.feedback_enabled ?? true,
       smartHighlightsEnabled: selectedRestaurant.smart_highlights_enabled ?? true,
       callWaiterEnabled: selectedRestaurant.call_waiter_enabled ?? false,
+      categoryCardsEnabled: selectedRestaurant.category_cards_enabled ?? true,
       facebookUrl: selectedRestaurant.facebook_url || "",
       instagramUrl: selectedRestaurant.instagram_url || "",
       tiktokUrl: selectedRestaurant.tiktok_url || "",
@@ -101,6 +102,7 @@ function SettingsContent({
           feedback_enabled: settings.feedbackEnabled,
           smart_highlights_enabled: settings.smartHighlightsEnabled,
           call_waiter_enabled: settings.callWaiterEnabled,
+          category_cards_enabled: settings.categoryCardsEnabled,
           facebook_url: settings.facebookUrl ?? "",
           instagram_url: settings.instagramUrl ?? "",
           tiktok_url: settings.tiktokUrl ?? "",
@@ -113,7 +115,6 @@ function SettingsContent({
       }
 
       await fetchRestaurants();
-      setIsSettingsModalOpen(false);
       showToast("Settings updated successfully!");
     } catch (error) {
       console.error("Save error:", error);
@@ -125,83 +126,27 @@ function SettingsContent({
     <>
       <div className="space-y-6">
         <Card className="border-border/70 bg-card/80 backdrop-blur">
-          <CardHeader className="flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
-            <div>
-              <Badge variant="secondary" className="uppercase tracking-widest">
-                Settings
-              </Badge>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight">
-                {selectedRestaurant.name}
-              </h1>
-              <CardDescription className="mt-2 max-w-2xl">
-                Manage how this restaurant looks, behaves, and appears to guests.
-              </CardDescription>
-            </div>
-            <Button
-              onClick={() => setIsSettingsModalOpen(true)}
-            >
-              <Settings className="h-4 w-4" />
-              Edit Settings
-            </Button>
+          <CardHeader className="space-y-3">
+            <Badge variant="secondary" className="w-fit uppercase tracking-widest">
+              Settings
+            </Badge>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              {selectedRestaurant.name}
+            </h1>
+            <CardDescription className="max-w-2xl">
+              Manage how this restaurant looks, behaves, and appears to guests.
+              Changes are saved when you click Save Changes at the bottom.
+            </CardDescription>
           </CardHeader>
         </Card>
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <SettingsCard
-            icon={<Palette className="h-5 w-5 text-indigo-600" />}
-            title="Appearance"
-            rows={[
-              ["Mode", selectedRestaurant.appearance || "minimal"],
-              ["Accent", selectedRestaurant.accent_color || "#6366f1"],
-              ["Background", selectedRestaurant.background_color || "#ffffff"],
-            ]}
-          />
-          <SettingsCard
-            icon={<SlidersHorizontal className="h-5 w-5 text-indigo-600" />}
-            title="Feature Toggles"
-            rows={[
-              [
-                "AI recommendations",
-                selectedRestaurant.recommendation_ai_enabled === false ? "Off" : "On",
-              ],
-              [
-                "Menu filters",
-                selectedRestaurant.menu_filters_enabled === false ? "Off" : "On",
-              ],
-              [
-                "Quick feedback",
-                selectedRestaurant.feedback_enabled === false ? "Off" : "On",
-              ],
-              [
-                "Smart highlights",
-                selectedRestaurant.smart_highlights_enabled === false ? "Off" : "On",
-              ],
-              [
-                "Call waiter",
-                selectedRestaurant.call_waiter_enabled ? "On" : "Off",
-              ],
-            ]}
-          />
-          <SettingsCard
-            icon={<Share2 className="h-5 w-5 text-indigo-600" />}
-            title="Contact & Socials"
-            rows={[
-              ["Phone", selectedRestaurant.phone || "Not set"],
-              ["Instagram", selectedRestaurant.instagram_url || "Not set"],
-              ["Facebook", selectedRestaurant.facebook_url || "Not set"],
-            ]}
-          />
-        </div>
+        <RestaurantSettingsForm
+          key={selectedRestaurant.id}
+          userRole={userRole}
+          initialSettings={initialSettings}
+          onSave={handleSaveSettings}
+        />
       </div>
-
-      <RestaurantSettingsModal
-        key={selectedRestaurant.id}
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        userRole={userRole}
-        initialSettings={initialSettings}
-        onSave={handleSaveSettings}
-      />
 
       {toast && (
         <Toast
@@ -215,52 +160,13 @@ function SettingsContent({
 }
 
 export default function SettingsPage() {
+  const { fetchRestaurants, selectedRestaurant, userRole } = useDashboard();
+  if (!selectedRestaurant) return null;
   return (
-    <DashboardShell section="settings">
-      {({ fetchRestaurants, selectedRestaurant, userRole }) => (
-        <SettingsContent
-          fetchRestaurants={fetchRestaurants}
-          selectedRestaurant={selectedRestaurant!}
-          userRole={userRole}
-        />
-      )}
-    </DashboardShell>
-  );
-}
-
-function SettingsCard({
-  icon,
-  title,
-  rows,
-}: {
-  icon: ReactNode;
-  title: string;
-  rows: Array<[string, string]>;
-}) {
-  return (
-    <Card className="border-border/70 bg-card/80 backdrop-blur">
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-primary/10 p-3">{icon}</div>
-          <div>
-            <CardTitle className="text-base">{title}</CardTitle>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {rows.map(([label, value]) => (
-          <div
-            key={label}
-            className="flex items-start justify-between gap-4 rounded-xl border border-border/60 bg-muted/30 px-4 py-3"
-          >
-            <span className="text-sm font-medium text-muted-foreground">{label}</span>
-            <span className="max-w-[58%] text-right text-sm font-medium">
-              {value}
-            </span>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+    <SettingsContent
+      fetchRestaurants={fetchRestaurants}
+      selectedRestaurant={selectedRestaurant}
+      userRole={userRole}
+    />
   );
 }

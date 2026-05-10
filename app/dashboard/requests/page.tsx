@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BellRing, CheckCircle2, Clock, Receipt, RefreshCw } from "lucide-react";
-import { DashboardShell } from "@/src/components/dashboard/DashboardShell";
+import { useDashboard } from "@/src/components/dashboard/DashboardProvider";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
@@ -170,11 +170,7 @@ function RequestsContent({ selectedRestaurant }: { selectedRestaurant: Restauran
 }
 
 export default function RequestsPage() {
-  return (
-    <DashboardShell section="requests">
-      {({ selectedRestaurant }) => (
-        <RequestsContent selectedRestaurant={selectedRestaurant!} />
-      )}
-    </DashboardShell>
-  );
+  const { selectedRestaurant } = useDashboard();
+  if (!selectedRestaurant) return null;
+  return <RequestsContent selectedRestaurant={selectedRestaurant} />;
 }

@@ -1,3 +1,5 @@
+export type SubscriptionTier = "basic" | "pro" | "business";
+
 export interface Restaurant {
   id: string;
   name: string;
@@ -29,8 +31,48 @@ export interface Restaurant {
   smart_highlights_enabled?: boolean;
   show_branding?: boolean;
   call_waiter_enabled?: boolean;
+  category_cards_enabled?: boolean;
+  font_pair_id?: string;
+  subscription_tier?: SubscriptionTier;
+  menu_score?: number | null;
+  menu_score_breakdown?: MenuScoreBreakdown | null;
+  menu_score_updated_at?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface MenuScoreBreakdown {
+  total: number;
+  items: Array<{
+    id: string;
+    label: string;
+    points: number;
+    earned: number;
+    detail?: string;
+  }>;
+  suggestions: Array<{
+    id: string;
+    message: string;
+    href?: string;
+  }>;
+}
+
+export type AiRecommendationType =
+  | "add_image"
+  | "add_description"
+  | "promote"
+  | "consider_removing"
+  | "general";
+
+export interface AiInsight {
+  id: string;
+  restaurant_id: string;
+  item_id: string | null;
+  recommendation_type: AiRecommendationType | string;
+  message: string;
+  priority: number;
+  status: "open" | "done" | "dismissed";
+  generated_at: string;
 }
 
 export interface MenuCategory {
@@ -38,6 +80,8 @@ export interface MenuCategory {
   restaurant_id: string;
   name: string;
   slug: string;
+  image_url?: string | null;
+  description?: string | null;
   order: number;
   created_at: string;
   updated_at: string;
@@ -107,12 +151,16 @@ export interface CreateMenuCategoryInput {
   name: string;
   slug: string;
   order: number;
+  image_url?: string | null;
+  description?: string | null;
 }
 
 export interface UpdateMenuCategoryInput {
   name?: string;
   slug?: string;
   order?: number;
+  image_url?: string | null;
+  description?: string | null;
 }
 
 export interface CreateMenuItemInput {
@@ -162,6 +210,7 @@ export interface RestaurantSettings {
   feedbackEnabled: boolean;
   smartHighlightsEnabled: boolean;
   callWaiterEnabled: boolean;
+  categoryCardsEnabled: boolean;
   facebookUrl?: string;
   instagramUrl?: string;
   tiktokUrl?: string;
@@ -260,4 +309,50 @@ export interface RestaurantAnalyticsSummary {
     item_name: string;
     opens: number;
   }>;
+}
+
+export interface ItemAnalyticsTopItem {
+  item_id: string;
+  item_name: string;
+  category_name: string | null;
+  total_opens: number;
+  opens_7d: number;
+  opens_prev_7d: number;
+  upsell_taps: number;
+  trend: "up" | "down" | "flat";
+  delta: number;
+}
+
+export interface ItemAnalyticsLowPerformer {
+  item_id: string;
+  item_name: string;
+  category_name: string | null;
+  has_image: boolean;
+  has_description: boolean;
+  is_available: boolean;
+}
+
+export interface ItemAnalyticsCategoryBreakdown {
+  category_id: string;
+  category_name: string;
+  opens: number;
+}
+
+export interface ItemAnalyticsHeatmapRow {
+  hour: number;
+  opens: number;
+  views: number;
+}
+
+export interface ItemAnalyticsResponse {
+  days: number;
+  topItems: ItemAnalyticsTopItem[];
+  lowPerformers: ItemAnalyticsLowPerformer[];
+  categoryBreakdown: ItemAnalyticsCategoryBreakdown[];
+  heatmap: ItemAnalyticsHeatmapRow[];
+  upsell: {
+    impressions: number;
+    taps: number;
+    conversion_rate: number;
+  };
 }

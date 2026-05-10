@@ -22,6 +22,7 @@ interface MenuSectionProps {
     items: MenuItem[];
     delay?: number;
     defaultOpen?: boolean;
+    hideHeader?: boolean;
     onItemWithImageClick?: (item: MenuItem) => void;
 }
 
@@ -108,10 +109,10 @@ const MenuItemCard = ({
 
                 <div className="p-3 md:p-4">
                     <div className="mb-1 flex items-start justify-between gap-2">
-                        <h3 className="font-display text-sm leading-tight text-foreground transition-colors duration-300 group-hover:text-accent md:text-base">
+                        <h3 className="menu-font-display text-sm leading-tight text-foreground transition-colors duration-300 group-hover:text-accent md:text-base">
                             {item.name}
                         </h3>
-                        <span className="shrink-0 font-sans text-sm font-semibold text-accent">
+                        <span className="shrink-0 menu-font-body text-sm font-semibold text-accent">
                             {item.price}
                         </span>
                     </div>
@@ -137,7 +138,7 @@ const MenuItemCard = ({
         >
             <div className="flex items-baseline justify-between gap-4">
                 <div className="flex items-center gap-2">
-                    <h3 className="font-display text-lg text-foreground transition-colors duration-300 group-hover:text-accent md:text-xl">
+                    <h3 className="menu-font-display text-lg text-foreground transition-colors duration-300 group-hover:text-accent md:text-xl">
                         {item.name}
                     </h3>
                     {!isAvailable && (
@@ -147,7 +148,7 @@ const MenuItemCard = ({
                     )}
                 </div>
                 <div className="mb-1 flex-1 border-b border-dashed border-muted-foreground/30" />
-                <span className="font-sans font-medium text-accent">{item.price}</span>
+                <span className="menu-font-body font-medium text-accent">{item.price}</span>
             </div>
             <p className="mt-1 max-w-md text-sm text-muted-foreground">
                 {item.description}
@@ -161,7 +162,7 @@ const MenuItemCard = ({
 
 // --- Main Component ---
 
-const MenuSection = ({ title, items, delay = 0, defaultOpen = true, onItemWithImageClick }: MenuSectionProps) => {
+const MenuSection = ({ title, items, delay = 0, defaultOpen = true, hideHeader = false, onItemWithImageClick }: MenuSectionProps) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
     // Group items: Images first, then text-only
@@ -170,6 +171,29 @@ const MenuSection = ({ title, items, delay = 0, defaultOpen = true, onItemWithIm
         const withoutImages = items.filter((item) => !item.image);
         return [...withImages, ...withoutImages];
     }, [items]);
+
+    if (hideHeader) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay }}
+                className="mb-8"
+            >
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+                    {sortedItems.map((item, index) => (
+                        <MenuItemCard
+                            key={item.name}
+                            item={item}
+                            index={index}
+                            delay={delay}
+                            onItemWithImageClick={onItemWithImageClick}
+                        />
+                    ))}
+                </div>
+            </motion.div>
+        );
+    }
 
     return (
         <motion.div
@@ -183,7 +207,7 @@ const MenuSection = ({ title, items, delay = 0, defaultOpen = true, onItemWithIm
                 onClick={() => setIsOpen(!isOpen)}
                 className="group flex w-full items-center justify-between py-3"
             >
-                <h2 className="font-display text-2xl tracking-wide text-accent transition-colors group-hover:text-accent/80 md:text-3xl">
+                <h2 className="menu-font-display text-2xl tracking-wide text-accent transition-colors group-hover:text-accent/80 md:text-3xl">
                     {title}
                 </h2>
                 <motion.div

@@ -40,19 +40,22 @@ export async function PATCH(
     ["name", body.name],
     ["slug", body.slug],
     ["order", body.order],
+    ["image_url", body.image_url],
+    ["description", body.description],
   ].filter(([, value]) => value !== undefined);
 
   if (entries.length === 0) {
     return NextResponse.json({ error: "No fields to update" }, { status: 400 });
   }
 
+  // Quote "order" since it's a reserved word; everything else is a plain identifier.
   const values = entries.map(([, value]) => value);
   values.push(id);
 
   const result = await query(
     `update menu_categories
      set ${entries
-       .map(([field], index) => `${field} = $${index + 1}`)
+       .map(([field], index) => `"${field}" = $${index + 1}`)
        .join(", ")}, updated_at = now()
      where id = $${values.length}
      returning *`,

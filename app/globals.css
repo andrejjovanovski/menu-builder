@@ -98,6 +98,15 @@
   border-color: var(--border);
 }
 
+/* Public menu typography variables. The actual values are set per-restaurant
+   on the menu root via `style={{ "--menu-font-display": ... }}`. */
+.menu-font-display {
+  font-family: var(--menu-font-display, var(--font-sans));
+}
+.menu-font-body {
+  font-family: var(--menu-font-body, var(--font-sans));
+}
+
 input,
 textarea,
 select {
