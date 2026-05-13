@@ -65,6 +65,8 @@ export async function PATCH(
     "smart_highlights_enabled",
     "show_branding",
     "call_waiter_enabled",
+    "category_cards_enabled",
+    "font_pair_id",
     "qr_code_url",
   ] as const;
 

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Megaphone, Pencil, Plus, Trash2 } from "lucide-react";
-import { DashboardShell } from "@/src/components/dashboard/DashboardShell";
+import { useDashboard } from "@/src/components/dashboard/DashboardProvider";
 import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
@@ -473,11 +473,7 @@ function PromotionsContent({ selectedRestaurant }: { selectedRestaurant: Restaur
 }
 
 export default function PromotionsPage() {
-  return (
-    <DashboardShell section="promotions">
-      {({ selectedRestaurant }) => (
-        <PromotionsContent selectedRestaurant={selectedRestaurant!} />
-      )}
-    </DashboardShell>
-  );
+  const { selectedRestaurant } = useDashboard();
+  if (!selectedRestaurant) return null;
+  return <PromotionsContent selectedRestaurant={selectedRestaurant} />;
 }

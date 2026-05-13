@@ -12,7 +12,12 @@
     "db:setup": "node scripts/setup-local.mjs",
     "admin:create": "node scripts/create-admin-user.mjs",
     "db:migrate:features": "node scripts/migrate-highlights-upsells.mjs",
-    "db:calc-trending": "node scripts/calc-trending.mjs"
+    "db:calc-trending": "node scripts/calc-trending.mjs",
+    "db:migrate:pricing": "node scripts/migrate-pricing-and-insights.mjs",
+    "db:migrate:category-cards": "node scripts/migrate-category-cards.mjs",
+    "db:migrate:font-pair": "node scripts/migrate-font-pair.mjs",
+    "db:calc-score": "node scripts/calc-menu-score.mjs",
+    "db:seed-demo": "node scripts/seed-demo-restaurant.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1029.0",

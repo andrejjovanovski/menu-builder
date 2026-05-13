@@ -4,7 +4,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FolderTree, Loader2, Plus, Search, UtensilsCrossed } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-import { DashboardShell } from "@/src/components/dashboard/DashboardShell";
+import { useDashboard } from "@/src/components/dashboard/DashboardProvider";
 import { CategoryModal } from "@/src/components/menu-builder/CategoryModal";
 import { DeleteItemModal } from "@/src/components/menu-builder/DeleteItemModal";
 import { EditItemModal } from "@/src/components/menu-builder/EditItemModal";
@@ -56,42 +56,41 @@ export default function MenuBuilderPage() {
     });
   }, [activeFilter, items, searchTerm]);
 
+  const { selectedRestaurant } = useDashboard();
+  if (!selectedRestaurant) return null;
+
   return (
-    <DashboardShell section="menu-builder">
-      {({ selectedRestaurant }) => (
-        <MenuBuilderContent
-          activeFilter={activeFilter}
-          categories={categories}
-          editingItem={editingItem}
-          filteredItems={filteredItems}
-          hasMore={hasMore}
-          items={items}
-          isCatModalOpen={isCatModalOpen}
-          isDeleting={isDeleting}
-          isItemModalOpen={isItemModalOpen}
-          itemToDelete={itemToDelete}
-          loadingMenu={loadingMenu}
-          loadingMore={loadingMore}
-          searchTerm={searchTerm}
-          selectedRestaurant={selectedRestaurant!}
-          setActiveFilter={setActiveFilter}
-          setCategories={setCategories}
-          setEditingItem={setEditingItem}
-          setHasMore={setHasMore}
-          setIsCatModalOpen={setIsCatModalOpen}
-          setIsDeleting={setIsDeleting}
-          setIsItemModalOpen={setIsItemModalOpen}
-          setItemToDelete={setItemToDelete}
-          setItems={setItems}
-          setLoadingMenu={setLoadingMenu}
-          setLoadingMore={setLoadingMore}
-          setSearchTerm={setSearchTerm}
-          setToast={setToast}
-          showToast={showToast}
-          toast={toast}
-        />
-      )}
-    </DashboardShell>
+    <MenuBuilderContent
+      activeFilter={activeFilter}
+      categories={categories}
+      editingItem={editingItem}
+      filteredItems={filteredItems}
+      hasMore={hasMore}
+      items={items}
+      isCatModalOpen={isCatModalOpen}
+      isDeleting={isDeleting}
+      isItemModalOpen={isItemModalOpen}
+      itemToDelete={itemToDelete}
+      loadingMenu={loadingMenu}
+      loadingMore={loadingMore}
+      searchTerm={searchTerm}
+      selectedRestaurant={selectedRestaurant}
+      setActiveFilter={setActiveFilter}
+      setCategories={setCategories}
+      setEditingItem={setEditingItem}
+      setHasMore={setHasMore}
+      setIsCatModalOpen={setIsCatModalOpen}
+      setIsDeleting={setIsDeleting}
+      setIsItemModalOpen={setIsItemModalOpen}
+      setItemToDelete={setItemToDelete}
+      setItems={setItems}
+      setLoadingMenu={setLoadingMenu}
+      setLoadingMore={setLoadingMore}
+      setSearchTerm={setSearchTerm}
+      setToast={setToast}
+      showToast={showToast}
+      toast={toast}
+    />
   );
 }
 
@@ -268,17 +267,20 @@ function MenuBuilderContent({
     }
   };
 
-  const handleCategoryUpdate = async (id: string, name: string) => {
+  const handleCategoryUpdate = async (
+    id: string,
+    patch: { name?: string; image_url?: string | null; description?: string | null }
+  ) => {
     try {
-      await apiFetch(`/api/categories/${id}`, {
+      const updated = await apiFetch<MenuCategory>(`/api/categories/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify(patch),
       });
 
       setCategories((current) =>
         current.map((category) =>
-          category.id === id ? { ...category, name: name.trim() } : category
+          category.id === id ? { ...category, ...updated } : category
         )
       );
       showToast("Category updated successfully!");

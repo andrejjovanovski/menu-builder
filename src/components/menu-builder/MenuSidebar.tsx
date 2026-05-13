@@ -17,6 +17,7 @@ interface NavigationItem {
   href: string;
   icon: LucideIcon;
   label: string;
+  adminOnly?: boolean;
 }
 
 interface Props {
@@ -141,29 +142,25 @@ export function MenuSidebar({
               <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 Workspace
               </p>
-              <div className="space-y-1">
-                {navigationItems.map((item) => {
-                  const active = currentPath === item.href;
-                  const Icon = item.icon;
+              <NavGroup
+                items={navigationItems.filter((item) => !item.adminOnly)}
+                currentPath={currentPath}
+                onNavigate={() => setIsOpen(false)}
+              />
 
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setIsOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
-                        active
-                          ? "bg-card text-card-foreground shadow-sm"
-                          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
+              {navigationItems.some((item) => item.adminOnly) && (
+                <>
+                  <Separator className="my-4" />
+                  <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Admin
+                  </p>
+                  <NavGroup
+                    items={navigationItems.filter((item) => item.adminOnly)}
+                    currentPath={currentPath}
+                    onNavigate={() => setIsOpen(false)}
+                  />
+                </>
+              )}
             </div>
           )}
         </nav>
@@ -181,5 +178,41 @@ export function MenuSidebar({
         </div>
       </aside>
     </>
+  );
+}
+
+function NavGroup({
+  items,
+  currentPath,
+  onNavigate,
+}: {
+  items: NavigationItem[];
+  currentPath: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <div className="space-y-1">
+      {items.map((item) => {
+        const active =
+          currentPath === item.href || currentPath.startsWith(item.href.split("?")[0]);
+        const Icon = item.icon;
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+              active
+                ? "bg-card text-card-foreground shadow-sm"
+                : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            <span>{item.label}</span>
+          </Link>
+        );
+      })}
+    </div>
   );
 }

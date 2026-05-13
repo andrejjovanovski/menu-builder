@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, Pencil, Plus } from "lucide-react";
-import { Payment, PaymentStatus, Restaurant } from "@/src/types";
+import { Payment, PaymentStatus, Restaurant, SubscriptionTier } from "@/src/types";
 import {
   getPaymentDisplayStatus,
   PAYMENT_STATUS_COLORS,
@@ -27,10 +27,12 @@ export function PaymentsManager({
   const [newExpiration, setNewExpiration] = useState("");
   const [newNotes, setNewNotes] = useState("");
   const [newStatus, setNewStatus] = useState<PaymentStatus>("active");
+  const [newTier, setNewTier] = useState<SubscriptionTier>("pro");
 
   const [editExpiration, setEditExpiration] = useState("");
   const [editNotes, setEditNotes] = useState("");
   const [editStatus, setEditStatus] = useState<PaymentStatus>("active");
+  const [editTier, setEditTier] = useState<SubscriptionTier>("pro");
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -69,6 +71,7 @@ export function PaymentsManager({
           expiration_date: newExpiration,
           notes: newNotes || null,
           status: newStatus,
+          tier: newTier,
         }),
       });
 
@@ -82,6 +85,7 @@ export function PaymentsManager({
       setNewExpiration("");
       setNewNotes("");
       setNewStatus("active");
+      setNewTier("pro");
       onPaymentsChange?.();
     } catch (error) {
       console.error("Failed to add payment", error);
@@ -99,6 +103,7 @@ export function PaymentsManager({
           expiration_date: editExpiration,
           notes: editNotes,
           status: editStatus,
+          tier: editTier,
         }),
       });
 
@@ -120,6 +125,8 @@ export function PaymentsManager({
     setEditExpiration(payment.expiration_date.slice(0, 10));
     setEditNotes(payment.notes || "");
     setEditStatus(payment.status);
+    const restaurant = restaurants.find((r) => r.id === payment.restaurant_id);
+    setEditTier(restaurant?.subscription_tier ?? "pro");
   };
 
   const restaurantName = (id: string) =>
@@ -193,6 +200,18 @@ export function PaymentsManager({
               <option value="expired">Expired</option>
               <option value="canceled">Canceled</option>
             </select>
+            <label className="mt-4 mb-1 block text-xs font-semibold text-slate-500">
+              Tier
+            </label>
+            <select
+              value={newTier}
+              onChange={(event) => setNewTier(event.target.value as SubscriptionTier)}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
+            >
+              <option value="basic">Basic</option>
+              <option value="pro">Pro</option>
+              <option value="business">Business</option>
+            </select>
             <button
               type="submit"
               disabled={adding}
@@ -255,7 +274,7 @@ export function PaymentsManager({
                   )}
 
                   {isEditing && (
-                    <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-200 pt-4 md:grid-cols-[auto_1fr_auto_auto]">
+                    <div className="mt-4 grid grid-cols-1 gap-3 border-t border-slate-200 pt-4 md:grid-cols-[auto_1fr_auto_auto_auto]">
                       <input
                         type="date"
                         value={editExpiration}
@@ -277,6 +296,15 @@ export function PaymentsManager({
                         <option value="active">Active</option>
                         <option value="expired">Expired</option>
                         <option value="canceled">Canceled</option>
+                      </select>
+                      <select
+                        value={editTier}
+                        onChange={(event) => setEditTier(event.target.value as SubscriptionTier)}
+                        className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                      >
+                        <option value="basic">Basic</option>
+                        <option value="pro">Pro</option>
+                        <option value="business">Business</option>
                       </select>
                       <div className="flex gap-2">
                         <button

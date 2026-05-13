@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import MenuHero from "@/src/components/public-menu/MenuHero";
 import MenuSection from "@/src/components/public-menu/MenuSection";
+import CategoryGrid from "@/src/components/public-menu/CategoryGrid";
 import { AskRecommendationSheet } from "@/src/components/public-menu/AskRecommendationSheet";
 import { FeedbackPrompt } from "@/src/components/public-menu/FeedbackPrompt";
 import { CallWaiterSheet } from "@/src/components/public-menu/CallWaiterSheet";
@@ -12,10 +13,11 @@ import PromotionPopup from "@/src/components/public-menu/PromotionPopup";
 import ProductBottomSheet, {
   type ProductBottomSheetItem,
 } from "@/src/components/public-menu/ProductBottomSheet";
-import { ChevronDown, CircleEllipsis, Facebook, Filter, Instagram, Phone, X } from "lucide-react";
+import { ArrowLeft, ChevronDown, CircleEllipsis, Facebook, Filter, Instagram, Phone, X } from "lucide-react";
 import { MenuItem, MenuCategory, Promotion, Restaurant } from "@/src/types";
 import { trackRestaurantEvent } from "@/src/utils/analytics";
 import { ALLERGEN_TAGS, DIETARY_TAGS } from "@/src/utils/menuTags";
+import { getFontPair } from "@/src/utils/theme-fonts";
 
 // TikTok icon (Lucide does not ship one) – minimal “note” shape
 function TiktokIcon({ size = 18 }: { size?: number }) {
@@ -43,21 +45,32 @@ interface RestaurantMenuClientProps {
   categoriesWithItems: CategoryWithItems[];
   restaurant: Restaurant;
   promotions?: Promotion[];
+  /**
+   * Render in preview mode (used by Theme Studio): disables analytics, hides
+   * the fixed-position floating widgets, and lets the menu sit inside a sized
+   * container instead of taking the full viewport height.
+   */
+  previewMode?: boolean;
 }
 
 export default function RestaurantMenuClient({
   categoriesWithItems,
   restaurant,
   promotions = [],
+  previewMode = false,
 }: RestaurantMenuClientProps) {
   const [isSocialOpen, setIsSocialOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ProductBottomSheetItem | null>(null);
   const [selectedDietaryTags, setSelectedDietaryTags] = useState<string[]>([]);
   const [avoidedAllergenTags, setAvoidedAllergenTags] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
   const tableIdentifier = searchParams.get("table");
+
+  const useCategoryCards = restaurant.category_cards_enabled !== false;
+  const fontPair = getFontPair(restaurant.font_pair_id);
 
   const transformItems = (items: MenuItem[]) =>
     items.map((item) => ({
@@ -160,15 +173,24 @@ export default function RestaurantMenuClient({
     selectedDietaryTags.length + avoidedAllergenTags.length;
 
   useEffect(() => {
+    if (previewMode) return;
     void trackRestaurantEvent({
       restaurantSlug: restaurant.slug,
       eventType: "menu_view",
     });
-  }, [restaurant.slug]);
+  }, [restaurant.slug, previewMode]);
+
+  // Scroll the page to the top whenever the user enters or leaves a category
+  // so the drilled view always starts at the header (and the grid does too on back).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (previewMode) return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [selectedCategoryId, previewMode]);
 
   return (
     <div
-      className="min-h-screen text-foreground transition-colors duration-500"
+      className={`${previewMode ? "min-h-full" : "min-h-screen"} text-foreground transition-colors duration-500`}
       style={
         {
           "--background": restaurant.background_color || "#161412",
@@ -176,6 +198,9 @@ export default function RestaurantMenuClient({
           "--card": restaurant.card_bg_color || "#211f1c",
           "--foreground": restaurant.text_color || "#211f1c",
           "--muted-foreground": restaurant.muted_text_color || "#211f1c",
+          "--menu-font-display": fontPair.displayCss,
+          "--menu-font-body": fontPair.bodyCss,
+          fontFamily: "var(--menu-font-body)",
           backgroundColor: "var(--background)",
           ...(isVisualMode
             ? {
@@ -189,19 +214,23 @@ export default function RestaurantMenuClient({
       }
     >
       {/* Full-screen Blur Backdrop (socials) */}
-      <AnimatePresence>
-        {isSocialOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsSocialOpen(false)}
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-          />
-        )}
-      </AnimatePresence>
+      {!previewMode && (
+        <AnimatePresence>
+          {isSocialOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSocialOpen(false)}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            />
+          )}
+        </AnimatePresence>
+      )}
 
-      <PromotionPopup promotions={promotions} restaurantId={restaurant.id} />
+      {!previewMode && (
+        <PromotionPopup promotions={promotions} restaurantId={restaurant.id} />
+      )}
 
       <ProductBottomSheet
         item={selectedItem}
@@ -209,16 +238,16 @@ export default function RestaurantMenuClient({
         restaurantSlug={restaurant.slug}
         onUpsellClick={(upsellItem) => setSelectedItem(upsellItem)}
       />
-      {restaurant.recommendation_ai_enabled !== false && (
+      {!previewMode && restaurant.recommendation_ai_enabled !== false && (
         <AskRecommendationSheet
           restaurantSlug={restaurant.slug}
           restaurantName={restaurant.name}
         />
       )}
-      {restaurant.feedback_enabled !== false && (
+      {!previewMode && restaurant.feedback_enabled !== false && (
         <FeedbackPrompt restaurantSlug={restaurant.slug} />
       )}
-      {restaurant.call_waiter_enabled && (
+      {!previewMode && restaurant.call_waiter_enabled && (
         <CallWaiterSheet
           restaurantSlug={restaurant.slug}
           tableIdentifier={tableIdentifier}
@@ -226,6 +255,7 @@ export default function RestaurantMenuClient({
       )}
 
       {/* Floating Menu Container */}
+      {!previewMode && (
       <div className="fixed bottom-6 left-5 z-40 flex flex-col items-start gap-4">
         {/* The Social Box (Opens upwards) */}
         <AnimatePresence>
@@ -294,6 +324,7 @@ export default function RestaurantMenuClient({
           </motion.div>
         </motion.button>
       </div>
+      )}
 
       {/* Main Content */}
       <div className="relative container max-w-4xl mx-auto px-6 py-8">
@@ -305,7 +336,42 @@ export default function RestaurantMenuClient({
           logoImage={restaurant.logo_url}
         />
 
-        {restaurant.smart_highlights_enabled !== false && popularItems.length > 0 && (
+        {/* Drill-in header (only shown in category cards mode when a category is selected) */}
+        {useCategoryCards && selectedCategoryId && (() => {
+          const cat = filteredCategories.find((c) => c.id === selectedCategoryId);
+          const fallbackCat = categoriesWithItems.find((c) => c.id === selectedCategoryId);
+          const displayCat = cat ?? fallbackCat;
+          if (!displayCat) return null;
+          return (
+            <motion.div
+              key="category-header"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="mt-8"
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedCategoryId(null)}
+                className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-[var(--card)]/70 px-3 py-1.5 text-xs font-semibold text-foreground transition hover:border-accent/50"
+              >
+                <ArrowLeft size={14} />
+                All categories
+              </button>
+              <h2 className="mt-4 text-2xl font-bold tracking-tight text-foreground">
+                {displayCat.name}
+              </h2>
+              {displayCat.description && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {displayCat.description}
+                </p>
+              )}
+            </motion.div>
+          );
+        })()}
+
+        {/* Popular strip — only on grid view */}
+        {!selectedCategoryId && restaurant.smart_highlights_enabled !== false && popularItems.length > 0 && (
           <section className="mt-8">
             <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
               Popular right now
@@ -455,7 +521,78 @@ export default function RestaurantMenuClient({
         </section>
         )}
 
-        {filteredCategories.length > 0 ? (
+        {useCategoryCards ? (
+          <AnimatePresence mode="wait">
+            {selectedCategoryId ? (
+              (() => {
+                const cat = filteredCategories.find((c) => c.id === selectedCategoryId);
+                if (!cat) {
+                  return (
+                    <motion.p
+                      key="empty-drilled"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="mt-8 text-center text-muted-foreground"
+                    >
+                      {hasActiveFilters
+                        ? "No items in this category match your filters."
+                        : "No items in this category yet."}
+                    </motion.p>
+                  );
+                }
+                return (
+                  <motion.div
+                    key={`drilled-${cat.id}`}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25 }}
+                    className="mt-6"
+                  >
+                    <MenuSection
+                      title={cat.name}
+                      items={transformItems(cat.items)}
+                      delay={0}
+                      defaultOpen
+                      hideHeader
+                      onItemWithImageClick={
+                        restaurant.open_bottom_sheet_on_click !== false
+                          ? (item) => {
+                              void trackRestaurantEvent({
+                                restaurantSlug: restaurant.slug,
+                                eventType: "item_open",
+                                itemId: item.id,
+                              });
+                              setSelectedItem(item);
+                            }
+                          : undefined
+                      }
+                    />
+                  </motion.div>
+                );
+              })()
+            ) : filteredCategories.length > 0 ? (
+              <CategoryGrid
+                key="grid"
+                categories={filteredCategories}
+                onSelect={(id) => setSelectedCategoryId(id)}
+              />
+            ) : (
+              <motion.p
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="mt-8 text-center text-muted-foreground"
+              >
+                {hasActiveFilters
+                  ? "No menu items match your current filters."
+                  : "No menu items available."}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        ) : filteredCategories.length > 0 ? (
           <div className="mt-8">
             {filteredCategories.map((category, index) => (
               <MenuSection

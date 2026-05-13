@@ -56,6 +56,12 @@ create table if not exists restaurants (
   smart_highlights_enabled boolean not null default true,
   show_branding boolean not null default true,
   call_waiter_enabled boolean not null default false,
+  category_cards_enabled boolean not null default true,
+  font_pair_id text not null default 'classic',
+  subscription_tier text not null default 'basic' check (subscription_tier in ('basic', 'pro', 'business')),
+  menu_score integer,
+  menu_score_breakdown jsonb,
+  menu_score_updated_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -69,11 +75,16 @@ create table if not exists menu_categories (
   restaurant_id uuid not null references restaurants(id) on delete cascade,
   name text not null,
   slug text not null,
+  image_url text,
+  description text,
   "order" integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (restaurant_id, slug)
 );
+
+alter table menu_categories add column if not exists image_url text;
+alter table menu_categories add column if not exists description text;
 
 create table if not exists menu_items (
   id uuid primary key,
@@ -189,3 +200,17 @@ alter table promotions add column if not exists display_frequency text
 
 create index if not exists idx_promotions_restaurant_id on promotions(restaurant_id);
 create index if not exists idx_promotions_lookup on promotions(restaurant_id, status, valid_until);
+
+create table if not exists restaurant_ai_insights (
+  id                  uuid primary key default gen_random_uuid(),
+  restaurant_id       uuid not null references restaurants(id) on delete cascade,
+  item_id             uuid references menu_items(id) on delete cascade,
+  recommendation_type text not null,
+  message             text not null,
+  priority            integer not null default 0,
+  status              text not null default 'open' check (status in ('open', 'done', 'dismissed')),
+  generated_at        timestamptz not null default now()
+);
+
+create index if not exists idx_restaurant_ai_insights_restaurant_id on restaurant_ai_insights(restaurant_id);
+create index if not exists idx_restaurant_ai_insights_status on restaurant_ai_insights(restaurant_id, status);

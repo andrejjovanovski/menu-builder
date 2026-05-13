@@ -49,7 +49,7 @@ const MenuHero = ({ title, subtitle, slogan, estYear, logoImage }: MenuHeroProps
                               Est. {estYear}
                             </span>
                         </div>
-                        <h1 className="font-display mb-4 text-5xl text-foreground md:text-7xl lg:text-8xl">
+                        <h1 className="menu-font-display mb-4 text-5xl text-foreground md:text-7xl lg:text-8xl">
                             {title}
                         </h1>
                         <div className="mb-6 flex items-center justify-center gap-4">

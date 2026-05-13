@@ -511,89 +511,180 @@ export default function MenuCupLanding() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
-            {/* Monthly Pay */}
+          <motion.div
+            className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto text-left items-start"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+          >
+            {/* Basic */}
             <motion.div
               variants={fadeInUp}
-              initial="hidden"
-              whileInView="visible"
-              className="p-8 rounded-3xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition"
+              className="p-8 rounded-3xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition flex flex-col"
             >
               <h3 className="text-lg font-bold mb-2 uppercase tracking-widest text-slate-400">
-                {tPricing("monthly.label")}
+                {tPricing("basic.label")}
               </h3>
-              <div className="text-5xl font-black mb-2 text-slate-900">
-                {tPricing("monthly.price")}
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-4xl font-black text-slate-900">
+                  {tPricing("basic.price")}
+                </span>
+                <span className="text-sm font-bold text-slate-400">/mo</span>
               </div>
-              <p className="text-sm text-slate-500 mb-6">
-                {tPricing("monthly.priceNote")}
+              <p className="text-sm text-slate-500 mb-2">
+                {tPricing("basic.priceNote")}
               </p>
-              <ul className="space-y-4 mb-8 text-sm text-slate-600">
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" />
-                  {tPricing("monthly.features.featOne")}
+              <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                {tPricing("basic.tagline")}
+              </p>
+              <ul className="space-y-3 mb-8 text-sm text-slate-600 flex-1">
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("basic.features.featOne")}
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" />{" "}
-                  {tPricing("monthly.features.featTwo")}
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("basic.features.featTwo")}
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" />{" "}
-                  {tPricing("monthly.features.featThree")}
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("basic.features.featThree")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("basic.features.featFour")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("basic.features.featFive")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("basic.features.featSix")}
                 </li>
               </ul>
               <button
                 onClick={() => scrollTo("contact")}
                 className="w-full py-4 bg-white border-2 border-slate-100 rounded-xl font-bold hover:bg-slate-50 transition"
               >
-                {tPricing("monthly.cta")}
+                {tPricing("basic.cta")}
               </button>
             </motion.div>
 
-            {/* Yearly Pay */}
+            {/* Pro */}
             <motion.div
               variants={fadeInUp}
-              initial="hidden"
-              whileInView="visible"
-              className="p-8 rounded-3xl border-2 border-indigo-600 bg-white shadow-xl relative scale-105 z-10 overflow-hidden"
+              className="p-8 rounded-3xl border-2 border-indigo-600 bg-white shadow-xl relative md:scale-105 z-10 overflow-hidden flex flex-col"
             >
               <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] font-bold px-4 py-1.5 rounded-bl-xl uppercase tracking-widest">
-                {tPricing("yearly.badge")}
+                {tPricing("pro.badge")}
               </div>
               <h3 className="text-lg font-bold mb-2 uppercase tracking-widest text-indigo-600">
-                {tPricing("yearly.label")}
+                {tPricing("pro.label")}
               </h3>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-black text-slate-900">
-                  {tPricing("yearly.price")}
+                <span className="text-4xl font-black text-slate-900">
+                  {tPricing("pro.price")}
                 </span>
-                <span className="text-lg font-bold text-slate-400">/mo</span>
+                <span className="text-sm font-bold text-slate-400">/mo</span>
               </div>
-              <p className="text-sm font-bold text-indigo-600 mb-6">
-                {tPricing("yearly.priceNote")}
+              <p className="text-sm font-bold text-indigo-600 mb-2">
+                {tPricing("pro.priceNote")}
               </p>
-              <ul className="space-y-4 mb-8 text-sm text-slate-600">
-                <li className="flex items-center gap-2 font-bold text-slate-900">
-                  <CheckCircle size={16} className="text-indigo-600" />{" "}
-                  {tPricing("yearly.features.featOne")}
+              <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                {tPricing("pro.tagline")}
+              </p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">
+                {tPricing("pro.everythingIn")}
+              </p>
+              <ul className="space-y-3 mb-8 text-sm text-slate-600 flex-1">
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("pro.features.featOne")}
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" />{" "}
-                  {tPricing("yearly.features.featTwo")}
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("pro.features.featTwo")}
                 </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={16} className="text-indigo-600" />{" "}
-                  {tPricing("yearly.features.featThree")}
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("pro.features.featThree")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("pro.features.featFour")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("pro.features.featFive")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-600 mt-0.5 shrink-0" />
+                  {tPricing("pro.features.featSix")}
                 </li>
               </ul>
               <button
                 onClick={() => scrollTo("contact")}
                 className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
               >
-                {tPricing("yearly.cta")}
+                {tPricing("pro.cta")}
               </button>
             </motion.div>
-          </div>
+
+            {/* Business */}
+            <motion.div
+              variants={fadeInUp}
+              className="p-8 rounded-3xl border border-slate-900 bg-slate-900 text-white shadow-sm hover:shadow-md transition flex flex-col"
+            >
+              <h3 className="text-lg font-bold mb-2 uppercase tracking-widest text-indigo-300">
+                {tPricing("business.label")}
+              </h3>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-4xl font-black text-white">
+                  {tPricing("business.price")}
+                </span>
+                <span className="text-sm font-bold text-slate-400">/mo</span>
+              </div>
+              <p className="text-sm text-slate-400 mb-2">
+                {tPricing("business.priceNote")}
+              </p>
+              <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+                {tPricing("business.tagline")}
+              </p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">
+                {tPricing("business.everythingIn")}
+              </p>
+              <ul className="space-y-3 mb-8 text-sm text-slate-300 flex-1">
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-300 mt-0.5 shrink-0" />
+                  {tPricing("business.features.featOne")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-300 mt-0.5 shrink-0" />
+                  {tPricing("business.features.featTwo")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-300 mt-0.5 shrink-0" />
+                  {tPricing("business.features.featThree")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-300 mt-0.5 shrink-0" />
+                  {tPricing("business.features.featFour")}
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle size={16} className="text-indigo-300 mt-0.5 shrink-0" />
+                  {tPricing("business.features.featFive")}
+                </li>
+              </ul>
+              <button
+                onClick={() => scrollTo("contact")}
+                className="w-full py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition"
+              >
+                {tPricing("business.cta")}
+              </button>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
