@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import Image from "next/image";
@@ -61,28 +61,23 @@ export default function ProductBottomSheet({
   onUpsellClick,
 }: ProductBottomSheetProps) {
   const [upsells, setUpsells] = useState<UpsellItem[]>([]);
-  const [upsellsTracked, setUpsellsTracked] = useState(false);
+  const trackedUpsellItemId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!item) {
-      setUpsells([]);
-      setUpsellsTracked(false);
-      return;
-    }
+    const selectedItemId = item?.id;
+    if (!selectedItemId) return;
 
     let cancelled = false;
 
     async function fetchUpsells() {
-      if (!item) return;
       try {
         const res = await fetch(
-          `/api/restaurants/${restaurantSlug}/items/${item.id}/upsells`
+          `/api/restaurants/${restaurantSlug}/items/${selectedItemId}/upsells`
         );
         if (!res.ok || cancelled) return;
         const data: UpsellItem[] = await res.json();
         if (!cancelled) {
           setUpsells(data);
-          setUpsellsTracked(false);
         }
       } catch {
         // silently ignore
@@ -90,7 +85,9 @@ export default function ProductBottomSheet({
     }
 
     void fetchUpsells();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [item?.id, restaurantSlug]);
 
   // Lock body scroll while the sheet is open so the page beneath doesn't move.
@@ -108,15 +105,15 @@ export default function ProductBottomSheet({
 
   // Track upsell impression once upsells are visible
   useEffect(() => {
-    if (upsells.length > 0 && item && !upsellsTracked) {
+    if (upsells.length > 0 && item && trackedUpsellItemId.current !== item.id) {
       void trackRestaurantEvent({
         restaurantSlug,
         eventType: "upsell_impression",
         itemId: item.id,
       });
-      setUpsellsTracked(true);
+      trackedUpsellItemId.current = item.id;
     }
-  }, [upsells, item, upsellsTracked, restaurantSlug]);
+  }, [upsells, item, restaurantSlug]);
 
   const handleUpsellTap = (upsell: UpsellItem) => {
     if (item) {
@@ -173,12 +170,13 @@ export default function ProductBottomSheet({
 
               {item.image && (
                 <div className="relative w-full aspect-[4/3] min-h-[220px] bg-muted/20 shrink-0 overflow-hidden">
-                  <img
+                  <Image
                     src={item.image}
                     alt={item.name}
-                    className="absolute inset-0 h-full w-full object-cover"
-                    fetchPriority="high"
-                    decoding="async"
+                    fill
+                    sizes="100vw"
+                    priority
+                    className="object-cover"
                   />
                   {item.is_available === false && (
                     <div className="absolute inset-0 flex items-center justify-center bg-background/40">
