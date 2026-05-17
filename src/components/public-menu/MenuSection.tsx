@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
@@ -57,36 +57,18 @@ function HighlightBadge({ item }: { item: MenuItem }) {
 
 const MenuItemCard = ({
     item,
-    index,
-    delay,
     onItemWithImageClick,
 }: {
     item: MenuItem;
-    index: number;
-    delay: number;
     onItemWithImageClick?: (item: MenuItem) => void;
 }) => {
     const isAvailable = item.is_available !== false;
+    const isClickable = typeof onItemWithImageClick === "function";
 
     // Visual style for items WITH images (clickable → opens bottom sheet)
     if (item.image) {
-        return (
-            <motion.div
-                key={item.name}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                role="button"
-                tabIndex={0}
-                onClick={() => onItemWithImageClick?.(item)}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onItemWithImageClick?.(item);
-                    }
-                }}
-                className="group relative cursor-pointer overflow-hidden rounded-xl border border-border/50 bg-card transition-all duration-300 hover:border-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
-            >
+        const content = (
+            <>
                 <div className="relative">
                     <div className={`aspect-square overflow-hidden ${!isAvailable ? "grayscale blur-[2px]" : ""}`}>
                         <Image
@@ -94,6 +76,7 @@ const MenuItemCard = ({
                             height={400}
                             src={item.image}
                             alt={item.name}
+                            sizes="(min-width: 768px) 33vw, 50vw"
                             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                     </div>
@@ -123,17 +106,31 @@ const MenuItemCard = ({
                         <HighlightBadge item={item} />
                     </div>
                 </div>
-            </motion.div>
+            </>
+        );
+
+        if (isClickable) {
+            return (
+                <button
+                    type="button"
+                    onClick={() => onItemWithImageClick(item)}
+                    className="group relative overflow-hidden rounded-xl border border-border/50 bg-card text-left transition-all duration-300 hover:border-accent/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50"
+                >
+                    {content}
+                </button>
+            );
+        }
+
+        return (
+            <div className="group relative overflow-hidden rounded-xl border border-border/50 bg-card">
+                {content}
+            </div>
         );
     }
 
     // Visual style for items WITHOUT images (Text-only)
     return (
-        <motion.div
-            key={item.name}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.2, delay: delay + index * 0.1 }}
+        <div
             className={`group col-span-2 md:col-span-3 ${!isAvailable ? "opacity-60" : ""}`}
         >
             <div className="flex items-baseline justify-between gap-4">
@@ -156,7 +153,7 @@ const MenuItemCard = ({
             <div className="mt-1.5">
                 <HighlightBadge item={item} />
             </div>
-        </motion.div>
+        </div>
     );
 };
 
@@ -181,12 +178,10 @@ const MenuSection = ({ title, items, delay = 0, defaultOpen = true, hideHeader =
                 className="mb-8"
             >
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
-                    {sortedItems.map((item, index) => (
+                    {sortedItems.map((item) => (
                         <MenuItemCard
-                            key={item.name}
+                            key={item.id}
                             item={item}
-                            index={index}
-                            delay={delay}
                             onItemWithImageClick={onItemWithImageClick}
                         />
                     ))}
@@ -229,12 +224,10 @@ const MenuSection = ({ title, items, delay = 0, defaultOpen = true, hideHeader =
                         className="overflow-hidden"
                     >
                         <div className="grid grid-cols-2 gap-4 pt-4 md:grid-cols-3 md:gap-6">
-                            {sortedItems.map((item, index) => (
+                            {sortedItems.map((item) => (
                                 <MenuItemCard
-                                    key={item.name}
+                                    key={item.id}
                                     item={item}
-                                    index={index}
-                                    delay={delay}
                                     onItemWithImageClick={onItemWithImageClick}
                                 />
                             ))}

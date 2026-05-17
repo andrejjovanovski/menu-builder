@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import MenuHero from "@/src/components/public-menu/MenuHero";
@@ -53,6 +54,22 @@ interface RestaurantMenuClientProps {
   previewMode?: boolean;
 }
 
+function toProductBottomSheetItem(item: MenuItem): ProductBottomSheetItem {
+  return {
+    id: item.id,
+    name: item.name,
+    description: item.description || "",
+    price: `${Number(item.price).toFixed(0)} ден.`,
+    image: item.image_url,
+    dietary_tags: item.dietary_tags || [],
+    allergen_tags: item.allergen_tags || [],
+    is_available: item.is_available,
+    is_best_seller: item.is_best_seller,
+    is_new: item.is_new,
+    is_trending: item.is_trending,
+  };
+}
+
 export default function RestaurantMenuClient({
   categoriesWithItems,
   restaurant,
@@ -71,39 +88,28 @@ export default function RestaurantMenuClient({
 
   const useCategoryCards = restaurant.category_cards_enabled !== false;
   const fontPair = getFontPair(restaurant.font_pair_id);
+  const didMountCategoryNavigation = useRef(false);
 
-  const transformItems = (items: MenuItem[]) =>
-    items.map((item) => ({
-      id: item.id,
-      name: item.name,
-      description: item.description || "",
-      price: `${Number(item.price).toFixed(0)} ден.`,
-      image: item.image_url,
-      dietary_tags: item.dietary_tags || [],
-      allergen_tags: item.allergen_tags || [],
-      is_available: item.is_available,
-      is_best_seller: item.is_best_seller,
-      is_new: item.is_new,
-      is_trending: item.is_trending,
-    }));
+  const formattedCategoryItemsById = useMemo(
+    () =>
+      new Map(
+        categoriesWithItems.map((category) => [
+          category.id,
+          category.items.map(toProductBottomSheetItem),
+        ])
+      ),
+    [categoriesWithItems]
+  );
 
-  const popularItems = categoriesWithItems
-    .flatMap((c) => c.items)
-    .filter((item) => item.is_available && (item.is_best_seller || item.is_trending))
-    .slice(0, 6)
-    .map((item) => ({
-      id: item.id,
-      name: item.name,
-      description: item.description || "",
-      price: `${Number(item.price).toFixed(0)} ден.`,
-      image: item.image_url,
-      dietary_tags: item.dietary_tags || [],
-      allergen_tags: item.allergen_tags || [],
-      is_available: item.is_available,
-      is_best_seller: item.is_best_seller,
-      is_new: item.is_new,
-      is_trending: item.is_trending,
-    }));
+  const popularItems = useMemo(
+    () =>
+      categoriesWithItems
+        .flatMap((category) => category.items)
+        .filter((item) => item.is_available && (item.is_best_seller || item.is_trending))
+        .slice(0, 6)
+        .map(toProductBottomSheetItem),
+    [categoriesWithItems]
+  );
 
   const isVisualMode = restaurant.appearance === "visual";
 
@@ -185,7 +191,12 @@ export default function RestaurantMenuClient({
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (previewMode) return;
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!didMountCategoryNavigation.current) {
+      didMountCategoryNavigation.current = true;
+      return;
+    }
+
+    window.scrollTo({ top: 0, behavior: "auto" });
   }, [selectedCategoryId, previewMode]);
 
   return (
@@ -207,7 +218,7 @@ export default function RestaurantMenuClient({
                 backgroundImage: `linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${restaurant.background_image_url})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
-                backgroundAttachment: "fixed",
+                backgroundRepeat: "no-repeat",
               }
             : {}),
         } as React.CSSProperties
@@ -229,10 +240,11 @@ export default function RestaurantMenuClient({
       )}
 
       {!previewMode && (
-        <PromotionPopup promotions={promotions} restaurantId={restaurant.id} />
+        <PromotionPopup promotions={promotions} />
       )}
 
       <ProductBottomSheet
+        key={selectedItem?.id ?? "menu-bottom-sheet"}
         item={selectedItem}
         onClose={() => setSelectedItem(null)}
         restaurantSlug={restaurant.slug}
@@ -395,10 +407,12 @@ export default function RestaurantMenuClient({
                 >
                   {item.image ? (
                     <div className="relative w-full aspect-square overflow-hidden">
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.name}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="128px"
+                        className="object-cover"
                       />
                     </div>
                   ) : (
@@ -552,7 +566,7 @@ export default function RestaurantMenuClient({
                   >
                     <MenuSection
                       title={cat.name}
-                      items={transformItems(cat.items)}
+                      items={formattedCategoryItemsById.get(cat.id) ?? []}
                       delay={0}
                       defaultOpen
                       hideHeader
@@ -598,7 +612,7 @@ export default function RestaurantMenuClient({
               <MenuSection
                 key={category.id}
                 title={category.name}
-                items={transformItems(category.items)}
+                items={formattedCategoryItemsById.get(category.id) ?? []}
                 delay={0.03 + index * 0.1}
                 defaultOpen={index === 0}
                 onItemWithImageClick={
