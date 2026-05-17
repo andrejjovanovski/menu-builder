@@ -64,14 +64,15 @@ export default function ProductBottomSheet({
   const trackedUpsellItemId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!item?.id) return;
+    const selectedItemId = item?.id;
+    if (!selectedItemId) return;
 
     let cancelled = false;
 
     async function fetchUpsells() {
       try {
         const res = await fetch(
-          `/api/restaurants/${restaurantSlug}/items/${item.id}/upsells`
+          `/api/restaurants/${restaurantSlug}/items/${selectedItemId}/upsells`
         );
         if (!res.ok || cancelled) return;
         const data: UpsellItem[] = await res.json();
