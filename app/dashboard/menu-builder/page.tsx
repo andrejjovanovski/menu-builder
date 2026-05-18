@@ -158,10 +158,36 @@ function MenuBuilderContent({
   const offsetRef = useRef(0);
   const loadingMoreRef = useRef(false);
   const hasMoreRef = useRef(false);
+  const fullItemsLoadedRef = useRef(false);
   const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
   const loadMoreItemsRef = useRef<() => void>(() => {});
+
+  const loadAllItems = useCallback(async () => {
+    if (loadingMoreRef.current || fullItemsLoadedRef.current) return;
+
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+
+    try {
+      const response = await apiFetch<ItemsPageResponse>(
+        `/api/restaurants/${selectedRestaurant.slug}/items`
+      );
+      const allItems = response?.items ?? [];
+      setItems(allItems);
+      offsetRef.current = allItems.length;
+      hasMoreRef.current = false;
+      fullItemsLoadedRef.current = true;
+      setHasMore(false);
+    } catch (error) {
+      console.error("Error loading full item list:", error);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }, [selectedRestaurant.slug, setHasMore, setItems, setLoadingMore]);
+
   const loadMoreItems = useCallback(async () => {
-    if (loadingMoreRef.current || !hasMoreRef.current) return;
+    if (loadingMoreRef.current || !hasMoreRef.current || fullItemsLoadedRef.current) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
 
@@ -172,6 +198,7 @@ function MenuBuilderContent({
       const newItems = response?.items ?? [];
       offsetRef.current += newItems.length;
       hasMoreRef.current = Boolean(response?.hasMore);
+      fullItemsLoadedRef.current = !hasMoreRef.current;
       setItems((current) => [...current, ...newItems]);
       setHasMore(hasMoreRef.current);
     } catch (error) {
@@ -193,6 +220,7 @@ function MenuBuilderContent({
       setActiveFilter("all");
       offsetRef.current = 0;
       hasMoreRef.current = false;
+      fullItemsLoadedRef.current = false;
       setHasMore(false);
 
       try {
@@ -210,11 +238,13 @@ function MenuBuilderContent({
         setItems(initialItems);
         offsetRef.current = initialItems.length;
         hasMoreRef.current = Boolean(itemsPage?.hasMore);
+        fullItemsLoadedRef.current = !hasMoreRef.current;
         setHasMore(hasMoreRef.current);
       } catch (error) {
         console.error("Error loading menu data:", error);
         setCategories([]);
         setItems([]);
+        fullItemsLoadedRef.current = false;
       } finally {
         setLoadingMenu(false);
       }
@@ -247,6 +277,21 @@ function MenuBuilderContent({
     observer.observe(sentinel);
     return () => observer.disconnect();
   }, [loadingMenu, hasMore]);
+
+  useEffect(() => {
+    const hasFilter = activeFilter !== "all";
+    const hasSearch = searchTerm.trim().length > 0;
+
+    if (!hasMoreRef.current || fullItemsLoadedRef.current) {
+      return;
+    }
+
+    if (!hasFilter && !hasSearch) {
+      return;
+    }
+
+    void loadAllItems();
+  }, [activeFilter, loadAllItems, searchTerm]);
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete) {
